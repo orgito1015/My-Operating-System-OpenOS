@@ -86,8 +86,8 @@ static uint8_t caps_lock = 0;
 /* Input buffer */
 #define INPUT_BUFFER_SIZE 256
 static char input_buffer[INPUT_BUFFER_SIZE];
-static int input_buffer_pos = 0;
-static int line_ready = 0;
+static size_t input_buffer_pos = 0;
+static uint8_t line_ready = 0;
 
 /* Initialize keyboard */
 void keyboard_init(void) {
@@ -125,6 +125,13 @@ void keyboard_handler(void) {
         /* Regular key press */
         else {
             char ascii = 0;
+            
+            /* Validate scancode to prevent out-of-bounds access */
+            if (scancode >= 128) {
+                /* Invalid scancode, ignore */
+                pic_send_eoi(1);
+                return;
+            }
             
             /* Get ASCII character */
             if (shift_pressed) {
@@ -167,7 +174,12 @@ void keyboard_handler(void) {
 }
 
 /* Get a line of input (blocking) */
-void keyboard_get_line(char* buffer, int max_len) {
+void keyboard_get_line(char* buffer, size_t max_len) {
+    /* Validate parameters */
+    if (buffer == NULL || max_len == 0) {
+        return;
+    }
+    
     /* Reset buffer */
     input_buffer_pos = 0;
     line_ready = 0;
@@ -178,7 +190,7 @@ void keyboard_get_line(char* buffer, int max_len) {
     }
     
     /* Copy to output buffer */
-    int i;
+    size_t i;
     for (i = 0; i < input_buffer_pos && i < max_len - 1; i++) {
         buffer[i] = input_buffer[i];
     }

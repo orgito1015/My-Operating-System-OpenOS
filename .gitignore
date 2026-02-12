@@ -1,6 +1,22 @@
+# Build artifacts
 build/
 *.o
 *.bin
 *.elf
 *.iso
 *.img
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Debug files
+*.log
+*.out

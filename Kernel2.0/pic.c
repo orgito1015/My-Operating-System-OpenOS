@@ -51,10 +51,10 @@ void pic_init(void) {
 
 /* Send End Of Interrupt signal */
 void pic_send_eoi(uint8_t irq) {
+    /* If IRQ came from slave PIC (IRQ 8-15), send EOI to both PICs */
     if (irq >= 8) {
-        /* Send EOI to slave PIC */
         outb(PIC2_CMD, PIC_EOI);
     }
-    /* Always send EOI to master PIC */
+    /* Always send EOI to master PIC (for IRQ 0-7 and slave IRQs) */
     outb(PIC1_CMD, PIC_EOI);
 }

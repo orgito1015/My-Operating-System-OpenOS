@@ -13,9 +13,19 @@
 #include "isr.h"
 #include "keyboard.h"
 
+/* VGA text mode constants */
 #define VGA_WIDTH  80
 #define VGA_HEIGHT 25
 #define VGA_MEMORY ((uint16_t*)0xB8000)
+
+/* GDT segment selectors */
+#define KERNEL_CODE_SEGMENT 0x08
+#define KERNEL_DATA_SEGMENT 0x10
+
+/* IDT gate flags */
+#define IDT_GATE_PRESENT    0x80
+#define IDT_GATE_INT32      0x0E
+#define IDT_FLAGS_KERNEL    (IDT_GATE_PRESENT | IDT_GATE_INT32)  /* 0x8E */
 
 static uint16_t* const vga_buf = VGA_MEMORY;
 static size_t term_row = 0;
@@ -103,7 +113,7 @@ void kmain(void) {
     pic_init();
     
     /* Install keyboard interrupt handler (IRQ1 = interrupt 0x21) */
-    idt_set_gate(0x21, (uint32_t)irq1_handler, 0x08, 0x8E);
+    idt_set_gate(0x21, (uint32_t)irq1_handler, KERNEL_CODE_SEGMENT, IDT_FLAGS_KERNEL);
     
     /* Initialize keyboard */
     keyboard_init();

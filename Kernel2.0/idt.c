@@ -26,10 +26,8 @@ void idt_set_gate(uint8_t num, uint32_t handler, uint16_t selector, uint8_t flag
 
 /* Initialize the IDT */
 void idt_init(void) {
-    int i;
-    
-    /* Clear the IDT */
-    for (i = 0; i < IDT_ENTRIES; i++) {
+    /* Clear the IDT - initialize all entries to zero */
+    for (int i = 0; i < IDT_ENTRIES; i++) {
         idt[i].offset_low = 0;
         idt[i].offset_high = 0;
         idt[i].selector = 0;
@@ -37,10 +35,10 @@ void idt_init(void) {
         idt[i].type_attr = 0;
     }
 
-    /* Set up the IDT pointer */
+    /* Set up the IDT pointer structure */
     idtp.limit = (sizeof(struct idt_entry) * IDT_ENTRIES) - 1;
     idtp.base = (uint32_t)&idt;
 
-    /* Load the IDT */
+    /* Load the IDT into the CPU */
     idt_load((uint32_t)&idtp);
 }
