@@ -2,6 +2,9 @@
  * OpenOS - Interrupt Service Routines (Assembly)
  */
 
+/* Kernel segment selectors */
+.set KERNEL_DATA_SEGMENT, 0x10
+
 .section .text
 
 /* External C handler */
@@ -21,7 +24,7 @@ irq1_handler:
     push %gs
     
     /* Load kernel data segment */
-    mov $0x10, %ax
+    mov $KERNEL_DATA_SEGMENT, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
