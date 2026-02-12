@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "idt.h"
+#include "pic.h"
+#include "isr.h"
+#include "keyboard.h"
 
 #define VGA_WIDTH  80
 #define VGA_HEIGHT 25
@@ -45,7 +49,17 @@ static void terminal_scroll(void) {
     }
 }
 
-static void terminal_put_char(char c) {
+void terminal_backspace(void) {
+    if (term_col > 0) {
+        term_col--;
+    } else if (term_row > 0) {
+        term_row--;
+        term_col = VGA_WIDTH - 1;
+    }
+    vga_buf[term_row * VGA_WIDTH + term_col] = vga_entry(' ', term_color);
+}
+
+void terminal_put_char(char c) {
     if (c == '\n') {
         term_col = 0;
         term_row++;
@@ -80,10 +94,32 @@ void kmain(void) {
     terminal_write("OpenOS - Educational Kernel Prototype\n");
     terminal_write("-------------------------------------\n");
     terminal_write("Running in 32-bit protected mode.\n");
-    terminal_write("Next steps: GDT/IDT, interrupts, paging, processes...\n");
+    terminal_write("Initializing interrupts...\n");
 
-    /* Halt the CPU forever */
-    for (;;) {
-        __asm__ __volatile__("hlt");
+    /* Initialize IDT */
+    idt_init();
+    
+    /* Initialize PIC */
+    pic_init();
+    
+    /* Install keyboard interrupt handler (IRQ1 = interrupt 0x21) */
+    idt_set_gate(0x21, (uint32_t)irq1_handler, 0x08, 0x8E);
+    
+    /* Initialize keyboard */
+    keyboard_init();
+    
+    /* Enable interrupts */
+    __asm__ __volatile__("sti");
+    
+    terminal_write("Keyboard initialized. Type something!\n\n");
+    
+    /* Interactive prompt loop */
+    char input[256];
+    while (1) {
+        terminal_write("OpenOS> ");
+        keyboard_get_line(input, sizeof(input));
+        terminal_write("You typed: ");
+        terminal_write(input);
+        terminal_write("\n");
     }
 }
