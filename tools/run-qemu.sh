@@ -34,23 +34,38 @@ fi
 # Build ISO if it doesn't exist or is older than the kernel
 if [ ! -f "$ISO_FILE" ] || [ "$KERNEL_BIN" -nt "$ISO_FILE" ]; then
     echo -e "${YELLOW}Building bootable ISO...${NC}"
-    # Ensure the ISO creation script is executable
+    
+    # Check if ISO creation script exists and is executable
+    if [ ! -f tools/create-iso.sh ]; then
+        echo -e "${RED}Error: tools/create-iso.sh not found${NC}"
+        echo "The ISO creation script is missing from the repository."
+        exit 1
+    fi
+    
     if [ ! -x tools/create-iso.sh ]; then
         chmod +x tools/create-iso.sh 2>/dev/null || {
-            echo -e "${RED}Error: Cannot execute tools/create-iso.sh${NC}"
-            echo "Please ensure the script has execute permissions."
+            echo -e "${RED}Error: Cannot make tools/create-iso.sh executable${NC}"
+            echo "Please run: chmod +x tools/create-iso.sh"
             exit 1
         }
     fi
-    # Suppress normal output but show errors
-    if ! ./tools/create-iso.sh > /dev/null; then
+    
+    # Run ISO creation, suppress verbose output but capture errors
+    ISO_LOG=$(mktemp)
+    if ! ./tools/create-iso.sh > "$ISO_LOG" 2>&1; then
         echo -e "${RED}Error: Failed to create ISO${NC}"
+        echo ""
+        echo "Output from create-iso.sh:"
+        cat "$ISO_LOG"
+        echo ""
         echo "Required tools: grub-mkrescue, xorriso, mtools"
         echo "Install with:"
         echo "  Ubuntu/Debian: sudo apt-get install grub-pc-bin xorriso mtools"
         echo "  Arch Linux:    sudo pacman -S grub xorriso mtools"
+        rm -f "$ISO_LOG"
         exit 1
     fi
+    rm -f "$ISO_LOG"
 fi
 
 # Display startup info
