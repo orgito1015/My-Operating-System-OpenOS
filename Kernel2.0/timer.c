@@ -51,6 +51,8 @@ uint64_t timer_get_ticks(void) {
 
 /*
  * Get uptime in milliseconds
+ * NOTE: Uptime will wrap around after ~49 days at 100Hz (32-bit overflow).
+ *       This is acceptable for an educational OS in Phase 0.
  */
 uint64_t timer_get_uptime_ms(void) {
     if (timer_frequency == 0) {

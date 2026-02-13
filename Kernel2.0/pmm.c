@@ -4,6 +4,7 @@
  */
 
 #include "pmm.h"
+#include <stdint.h>
 
 /* Bitmap to track page frame usage (1 bit per page) */
 static uint8_t pmm_bitmap[PMM_BITMAP_SIZE];
@@ -145,7 +146,7 @@ void *pmm_alloc_page(void) {
  * Free a physical page
  */
 void pmm_free_page(void *page) {
-    uint32_t page_num = (uint32_t)page / PMM_PAGE_SIZE;
+    uint32_t page_num = (uint32_t)(uintptr_t)page / PMM_PAGE_SIZE;
     
     if (page_num < total_pages && bitmap_test(page_num)) {
         bitmap_clear(page_num);
@@ -157,7 +158,7 @@ void pmm_free_page(void *page) {
  * Mark a physical page as used
  */
 void pmm_mark_used(void *page) {
-    uint32_t page_num = (uint32_t)page / PMM_PAGE_SIZE;
+    uint32_t page_num = (uint32_t)(uintptr_t)page / PMM_PAGE_SIZE;
     
     if (page_num < total_pages && !bitmap_test(page_num)) {
         bitmap_set(page_num);
@@ -176,7 +177,7 @@ void pmm_mark_free(void *page) {
  * Check if a page is free
  */
 bool pmm_is_page_free(void *page) {
-    uint32_t page_num = (uint32_t)page / PMM_PAGE_SIZE;
+    uint32_t page_num = (uint32_t)(uintptr_t)page / PMM_PAGE_SIZE;
     
     if (page_num >= total_pages) {
         return false;

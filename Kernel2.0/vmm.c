@@ -32,6 +32,8 @@ static inline void tlb_flush_all(void) {
 
 /*
  * Get or create a page table for a virtual address
+ * NOTE: This function assumes physical memory is identity-mapped (virt == phys)
+ *       which is true during Phase 0. For higher-half kernel, this will need updating.
  */
 static struct page_table *get_page_table(struct page_directory *dir, void *virt, bool create) {
     uint32_t pd_index = PD_INDEX(virt);
@@ -70,6 +72,8 @@ static struct page_table *get_page_table(struct page_directory *dir, void *virt,
 
 /*
  * Initialize the Virtual Memory Manager
+ * NOTE: This assumes physical memory is identity-mapped during initialization.
+ *       The first 4MB is identity-mapped to cover kernel code/data and VGA buffer.
  */
 void vmm_init(void) {
     /* Allocate kernel page directory */
