@@ -168,9 +168,10 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
 Additional documentation can be found in the `/docs` directory:
 
+- `VIRTUALBOX_QUICKSTART.md` - Quick start guide for VirtualBox
+- `VIRTUALBOX_TROUBLESHOOTING.md` - VirtualBox setup and troubleshooting
 - `architecture.md` - System architecture overview
 - `roadmap.md` - Future development plans
-- `VIRTUALBOX_TROUBLESHOOTING.md` - VirtualBox setup and troubleshooting
 - `Kernel2.0/README.md` - Detailed kernel documentation
 
 ## 📄 License
