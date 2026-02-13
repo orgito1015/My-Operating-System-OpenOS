@@ -13,10 +13,6 @@ static void io_wait(void) {
 
 /* Initialize and remap the PIC */
 void pic_init(void) {
-    /* Save masks */
-    uint8_t mask1 = inb(PIC1_DATA);
-    uint8_t mask2 = inb(PIC2_DATA);
-
     /* Start initialization sequence (ICW1) */
     outb(PIC1_CMD, ICW1_INIT | ICW1_ICW4);
     io_wait();
@@ -44,9 +40,9 @@ void pic_init(void) {
     outb(PIC2_DATA, ICW4_8086);
     io_wait();
 
-    /* Restore saved masks */
-    outb(PIC1_DATA, mask1);
-    outb(PIC2_DATA, mask2);
+    /* Mask all interrupts initially - let drivers enable what they need */
+    outb(PIC1_DATA, 0xFF);
+    outb(PIC2_DATA, 0xFF);
 }
 
 /* Send End Of Interrupt signal */
