@@ -6,6 +6,7 @@
 #define ISR_H
 
 /* IRQ handlers */
+void irq0_handler(void);  /* Timer interrupt */
 void irq1_handler(void);  /* Keyboard interrupt */
 
 /* ISR installation */

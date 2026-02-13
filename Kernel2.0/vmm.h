@@ -14,6 +14,10 @@
 #define PAGE_TABLE_ENTRIES  1024
 #define PAGE_DIR_ENTRIES    1024
 
+/* Type definitions for page entries */
+typedef uint32_t pte_t;
+typedef uint32_t pde_t;
+
 /* Page flags */
 #define PTE_PRESENT         (1 << 0)
 #define PTE_WRITABLE        (1 << 1)

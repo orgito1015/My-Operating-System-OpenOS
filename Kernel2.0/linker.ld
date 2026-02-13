@@ -55,4 +55,12 @@ SECTIONS
     *(.bss*)
     *(COMMON)
   }
+
+  /* Discard unnecessary sections */
+  /DISCARD/ :
+  {
+    *(.note.gnu.build-id)
+    *(.comment)
+    *(.eh_frame)
+  }
 }
