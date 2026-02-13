@@ -45,7 +45,7 @@ help:
 	@echo "Targets:"
 	@echo "  all      - Build the kernel (default)"
 	@echo "  clean    - Remove build artifacts"
-	@echo "  run      - Build and run in QEMU (direct kernel boot)"
+	@echo "  run      - Build and run in QEMU (via bootable ISO)"
 	@echo "  iso      - Create bootable ISO image with GRUB"
 	@echo "  run-iso  - Build ISO and run in QEMU"
 	@echo "  run-vbox - Build ISO and run in VirtualBox"

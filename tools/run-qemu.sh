@@ -37,10 +37,10 @@ if [ ! -f "$ISO_FILE" ] || [ "$KERNEL_BIN" -nt "$ISO_FILE" ]; then
     chmod +x tools/create-iso.sh
     if ! ./tools/create-iso.sh > /dev/null 2>&1; then
         echo -e "${RED}Error: Failed to create ISO${NC}"
-        echo "Required tools: grub-mkrescue, xorriso"
+        echo "Required tools: grub-mkrescue, xorriso, mtools"
         echo "Install with:"
-        echo "  Ubuntu/Debian: sudo apt-get install grub-pc-bin xorriso"
-        echo "  Arch Linux:    sudo pacman -S grub xorriso"
+        echo "  Ubuntu/Debian: sudo apt-get install grub-pc-bin xorriso mtools"
+        echo "  Arch Linux:    sudo pacman -S grub xorriso mtools"
         exit 1
     fi
 fi
