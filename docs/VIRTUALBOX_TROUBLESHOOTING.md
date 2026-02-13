@@ -149,7 +149,8 @@ file openos.iso
 
 ### VM Performance
 For best performance:
-- Allocate 512 MB RAM (minimum)
+- Allocate at least 512 MB RAM (this is the recommended minimum)
+- For smoother operation, consider 1024 MB RAM
 - Enable VT-x/AMD-V hardware virtualization
 - Enable PAE/NX
 - Disable unnecessary features (USB, audio, network) in VM settings

@@ -79,7 +79,14 @@ fi
 
 # Create ISO image with GRUB
 echo "Creating ISO image with grub-mkrescue..."
-grub-mkrescue -o "$ISO_OUTPUT" "$ISO_DIR" 2>&1 | grep -v "warning: Attempting to install GRUB to a" || true
+grub-mkrescue -o "$ISO_OUTPUT" "$ISO_DIR" 2>&1 | tee /tmp/grub-mkrescue.log | grep -v "warning: Attempting to install GRUB to a" || true
+if [ -f /tmp/grub-mkrescue.log ] && grep -qi "error" /tmp/grub-mkrescue.log; then
+    echo -e "${RED}Errors detected during ISO creation:${NC}"
+    grep -i "error" /tmp/grub-mkrescue.log
+    rm -f /tmp/grub-mkrescue.log
+    exit 1
+fi
+rm -f /tmp/grub-mkrescue.log
 
 # Check if ISO was created successfully
 if [ -f "$ISO_OUTPUT" ]; then

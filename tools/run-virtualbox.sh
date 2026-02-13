@@ -61,7 +61,7 @@ VBoxManage modifyvm "$VM_NAME" \
     --acpi on \
     --ioapic on \
     --cpus 1 \
-    --pae off \
+    --pae on \
     --hwvirtex on
 
 # Create and attach storage controller
