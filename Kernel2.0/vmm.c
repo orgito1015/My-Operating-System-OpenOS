@@ -36,6 +36,8 @@ void vmm_destroy_directory(struct page_directory *dir) {
 
 /*
  * Switch to a different page directory
+ * NOTE: This assumes paging is already enabled and kernel is in higher-half mode.
+ * During early boot, direct physical addresses should be used instead.
  */
 void vmm_switch_directory(struct page_directory *dir) {
     if (!dir) return;
@@ -43,6 +45,7 @@ void vmm_switch_directory(struct page_directory *dir) {
     current_directory = dir;
     
     /* Load the page directory into CR3 */
+    /* TODO: Handle both identity-mapped boot phase and higher-half kernel */
     uint32_t phys_addr = VIRT_TO_PHYS((uint32_t)dir);
     __asm__ __volatile__("mov %0, %%cr3" : : "r"(phys_addr));
 }

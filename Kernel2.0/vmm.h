@@ -27,11 +27,10 @@
 
 /* Kernel virtual base address (higher-half kernel) */
 #define KERNEL_VIRTUAL_BASE 0xC0000000
-#define KERNEL_PAGE_OFFSET  0xC0000000
 
 /* Physical to virtual address conversion macros */
-#define PHYS_TO_VIRT(addr)  ((void*)((uint32_t)(addr) + KERNEL_PAGE_OFFSET))
-#define VIRT_TO_PHYS(addr)  ((uint32_t)(addr) - KERNEL_PAGE_OFFSET)
+#define PHYS_TO_VIRT(addr)  ((void*)((uint32_t)(addr) + KERNEL_VIRTUAL_BASE))
+#define VIRT_TO_PHYS(addr)  ((uint32_t)(addr) - KERNEL_VIRTUAL_BASE)
 
 /* Page table structure */
 struct page_table {
