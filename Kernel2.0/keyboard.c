@@ -180,9 +180,11 @@ void keyboard_get_line(char* buffer, size_t max_len) {
         return;
     }
     
-    /* Reset buffer */
+    /* Reset buffer - disable interrupts to prevent race condition */
+    __asm__ __volatile__("cli");
     input_buffer_pos = 0;
     line_ready = 0;
+    __asm__ __volatile__("sti");
     
     /* Wait for line to be ready (interrupts must be enabled) */
     while (!line_ready) {
