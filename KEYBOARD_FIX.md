@@ -23,7 +23,7 @@ The initialization sequence in `kernel.c` was:
 2. `timer_init(100)` - Configures PIT but didn't unmask IRQ0
 3. `keyboard_init()` - Correctly unmasks IRQ1
 
-While IRQ1 (keyboard) was being unmasked correctly, having IRQ0 masked could potentially interfere with interrupt handling, though this alone may not fully explain the keyboard issue.
+While IRQ1 (keyboard) was being unmasked correctly, having IRQ0 masked meant timer interrupts were not functioning. This fix ensures both interrupts are properly enabled, allowing the complete interrupt system to operate as designed.
 
 ## Fix Applied
 
