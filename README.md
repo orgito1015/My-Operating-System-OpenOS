@@ -255,6 +255,7 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 Additional documentation can be found in the `/docs` directory:
 
 - **[UPGRADE_PHASE0.md](docs/UPGRADE_PHASE0.md)** - Complete Phase 0 implementation guide
+- **[MULTIBOOT_FIX.md](docs/MULTIBOOT_FIX.md)** - Technical deep-dive: GRUB multiboot header fix
 - **[OS_EVOLUTION_STRATEGY.md](docs/OS_EVOLUTION_STRATEGY.md)** - 36-week development roadmap
 - **[VIRTUALBOX_QUICKSTART.md](docs/VIRTUALBOX_QUICKSTART.md)** - Quick start guide for VirtualBox
 - **[VIRTUALBOX_TROUBLESHOOTING.md](docs/VIRTUALBOX_TROUBLESHOOTING.md)** - VirtualBox troubleshooting

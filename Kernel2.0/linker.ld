@@ -16,17 +16,13 @@ SECTIONS
 
   /* Multiboot header must be in the first 8 KiB of the kernel
    * This section contains the Multiboot magic, flags, and checksum
+   * It MUST be placed at the very start before all other sections
    */
-  .multiboot :
+  .text :
   {
+    /* Place multiboot header first, before any code */
     *(.multiboot)
-  }
-
-  /* Code section - contains all executable instructions
-   * Aligned to 4 KiB page boundary for future paging support
-   */
-  .text ALIGN(4K) :
-  {
+    /* Then place all code sections */
     *(.text*)
   }
 
