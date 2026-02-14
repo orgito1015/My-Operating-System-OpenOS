@@ -1,6 +1,6 @@
 # OpenOS - Advanced Educational Kernel
 
-OpenOS is an educational, open-source operating system built from scratch for the x86 architecture. It features complete exception handling, memory management, and timer support - a production-ready foundation for learning OS development.
+OpenOS is an educational, open-source operating system built from scratch for the x86 architecture. It features a **modular monolithic architecture**, complete exception handling, memory management, and timer support - a production-ready foundation for learning OS development.
 
 The goal is to build a small, understandable OS **from zero**, inspired by hobby OS projects like MyraOS, xv6, and OSDev examples — but implemented with **our own code**, fully documented, and open for community contribution.
 
@@ -13,13 +13,37 @@ To create a collaborative OS development environment where students, beginners, 
 - How processes and syscalls operate  
 - How filesystems and user programs work  
 
-All with clean, simple, modern C + Assembly code.
+All with clean, simple, modern C + Assembly code in a **well-organized modular structure**.
+
+## 🏗️ Architecture
+
+OpenOS follows a **modular monolithic kernel architecture**:
+
+```
+├── arch/x86/          # Architecture-specific code (IDT, ISR, PIC, exceptions)
+├── kernel/            # Core kernel (initialization, panic handling)
+├── memory/            # Memory management (PMM, VMM, heap)
+├── drivers/           # Hardware drivers (console, keyboard, timer)
+├── fs/                # File systems (VFS - future)
+├── process/           # Process management (future)
+└── include/           # Common headers (types, multiboot)
+```
+
+**Benefits**:
+- ✅ Clear separation of concerns
+- ✅ No circular dependencies
+- ✅ Easy to navigate and understand
+- ✅ Scalable for future growth
+- ✅ Industry-standard organization
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ## ✨ Features
 
 ### Phase 0 - Core Foundation (✅ Complete)
+- ✅ **Modular monolithic architecture** - Clean separation of concerns
 - ✅ **Multiboot-compatible 32-bit kernel** - GRUB bootloader support
-- ✅ **VGA text output** - 80x25 color text mode
+- ✅ **VGA text output** - 80x25 color text mode via console driver
 - ✅ **Complete exception handling** - All 32 x86 CPU exceptions with detailed crash reports
 - ✅ **Interrupt handling** - IDT, ISRs, IRQs with PIC management
 - ✅ **Physical memory manager (PMM)** - Bitmap-based page frame allocator
@@ -254,6 +278,8 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
 Additional documentation can be found in the `/docs` directory:
 
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete architecture documentation
+- **[REFACTORING.md](docs/REFACTORING.md)** - Refactoring guide and migration information
 - **[UPGRADE_PHASE0.md](docs/UPGRADE_PHASE0.md)** - Complete Phase 0 implementation guide
 - **[MULTIBOOT_FIX.md](docs/MULTIBOOT_FIX.md)** - Technical deep-dive: GRUB multiboot header fix
 - **[OS_EVOLUTION_STRATEGY.md](docs/OS_EVOLUTION_STRATEGY.md)** - 36-week development roadmap
@@ -264,12 +290,13 @@ Additional documentation can be found in the `/docs` directory:
 
 ## 📊 Project Stats
 
-- **Lines of Code**: ~1,650 (kernel)
-- **Source Files**: 21
+- **Lines of Code**: ~2,400 (kernel + documentation)
+- **Source Files**: 33 (organized in 7 directories)
 - **Exception Handlers**: 32 (all x86 exceptions)
 - **Memory Management**: PMM + VMM (fully implemented)
+- **Drivers**: Console (VGA), Keyboard (PS/2), Timer (PIT)
 - **Supported Platforms**: QEMU, VirtualBox, Bochs
-- **Documentation**: 3,000+ lines
+- **Documentation**: 20,000+ lines (including architecture docs)
 
 ## 📄 License
 MIT License — free to use, modify, and contribute.
