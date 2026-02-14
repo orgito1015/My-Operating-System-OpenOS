@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # OpenOS QEMU Launcher Script
-# Runs the OpenOS kernel in QEMU emulator
+# Runs the OpenOS kernel in QEMU emulator via bootable ISO
 #
 
 # Color output for better visibility
@@ -10,8 +10,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Path to kernel binary
+# Paths
 KERNEL_BIN="Kernel2.0/openos.bin"
+ISO_FILE="openos.iso"
 
 # Check if QEMU is installed
 if ! command -v qemu-system-i386 &> /dev/null; then
@@ -30,17 +31,54 @@ if [ ! -f "$KERNEL_BIN" ]; then
     exit 1
 fi
 
-# Display kernel info
+# Build ISO if it doesn't exist or is older than the kernel
+if [ ! -f "$ISO_FILE" ] || [ "$KERNEL_BIN" -nt "$ISO_FILE" ]; then
+    echo -e "${YELLOW}Building bootable ISO...${NC}"
+    
+    # Check if ISO creation script exists and is executable
+    if [ ! -f tools/create-iso.sh ]; then
+        echo -e "${RED}Error: tools/create-iso.sh not found${NC}"
+        echo "The ISO creation script is missing from the repository."
+        exit 1
+    fi
+    
+    if [ ! -x tools/create-iso.sh ]; then
+        chmod +x tools/create-iso.sh 2>/dev/null || {
+            echo -e "${RED}Error: Cannot make tools/create-iso.sh executable${NC}"
+            echo "Please run: chmod +x tools/create-iso.sh"
+            exit 1
+        }
+    fi
+    
+    # Run ISO creation, suppress verbose output but capture errors
+    ISO_LOG=$(mktemp)
+    if ! ./tools/create-iso.sh > "$ISO_LOG" 2>&1; then
+        echo -e "${RED}Error: Failed to create ISO${NC}"
+        echo ""
+        echo "Output from create-iso.sh:"
+        cat "$ISO_LOG"
+        echo ""
+        echo "Required tools: grub-mkrescue, xorriso, mtools"
+        echo "Install with:"
+        echo "  Ubuntu/Debian: sudo apt-get install grub-pc-bin xorriso mtools"
+        echo "  Arch Linux:    sudo pacman -S grub xorriso mtools"
+        rm -f "$ISO_LOG"
+        exit 1
+    fi
+    rm -f "$ISO_LOG"
+fi
+
+# Display startup info
 echo -e "${GREEN}Starting OpenOS in QEMU...${NC}"
 echo "Kernel: $KERNEL_BIN"
+echo "Boot method: ISO with GRUB (compatible with all QEMU versions)"
 echo "Press Ctrl+Alt+G to release mouse/keyboard from QEMU"
 echo "Press Ctrl+C in terminal to quit"
 echo ""
 
-# Launch QEMU with the kernel
-# -kernel: Direct kernel boot (Multiboot)
-# -serial stdio: Redirect serial output to terminal (for debugging)
-# -display gtk: Use GTK display (better than SDL on some systems)
-qemu-system-i386 -kernel "$KERNEL_BIN"
+# Launch QEMU with ISO
+# Using ISO boot is more reliable than direct kernel boot
+# and works with all QEMU versions (including 7.0+)
+qemu-system-i386 -cdrom "$ISO_FILE"
 
 echo -e "${YELLOW}QEMU exited${NC}"

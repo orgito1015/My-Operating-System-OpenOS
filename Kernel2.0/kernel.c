@@ -12,6 +12,9 @@
 #include "pic.h"
 #include "isr.h"
 #include "keyboard.h"
+#include "exceptions.h"
+#include "timer.h"
+/* #include "pmm.h" */  /* TODO: Uncomment when Multiboot info is passed */
 
 /* VGA text mode constants */
 #define VGA_WIDTH  80
@@ -92,7 +95,7 @@ void terminal_put_char(char c) {
     }
 }
 
-static void terminal_write(const char* s) {
+void terminal_write(const char* s) {
     for (size_t i = 0; s[i] != '\0'; i++) {
         terminal_put_char(s[i]);
     }
@@ -101,27 +104,50 @@ static void terminal_write(const char* s) {
 /* Kernel entry point called from boot.S */
 void kmain(void) {
     terminal_clear();
-    terminal_write("OpenOS - Educational Kernel Prototype\n");
-    terminal_write("-------------------------------------\n");
-    terminal_write("Running in 32-bit protected mode.\n");
-    terminal_write("Initializing interrupts...\n");
+    terminal_write("OpenOS - Advanced Educational Kernel\n");
+    terminal_write("====================================\n");
+    terminal_write("Running in 32-bit protected mode.\n\n");
 
     /* Initialize IDT */
+    terminal_write("[1/5] Initializing IDT...\n");
     idt_init();
     
+    /* Install exception handlers */
+    terminal_write("[2/5] Installing exception handlers...\n");
+    exceptions_init();
+    
     /* Initialize PIC */
+    terminal_write("[3/5] Initializing PIC...\n");
     pic_init();
     
+    /* Initialize timer (100 Hz) */
+    terminal_write("[4/5] Initializing timer...\n");
+    timer_init(100);
+    idt_set_gate(0x20, (uint32_t)irq0_handler, KERNEL_CODE_SEGMENT, IDT_FLAGS_KERNEL);
+    
     /* Install keyboard interrupt handler (IRQ1 = interrupt 0x21) */
+    terminal_write("[5/5] Initializing keyboard...\n");
     idt_set_gate(0x21, (uint32_t)irq1_handler, KERNEL_CODE_SEGMENT, IDT_FLAGS_KERNEL);
     
     /* Initialize keyboard */
     keyboard_init();
     
+    /* TODO: When Multiboot info is passed to kmain(), uncomment these lines:
+     * terminal_write("[6/7] Initializing physical memory...\n");
+     * pmm_init(mboot);
+     * 
+     * terminal_write("[7/7] Initializing virtual memory...\n");
+     * vmm_init();
+     */
+    
     /* Enable interrupts */
     __asm__ __volatile__("sti");
     
-    terminal_write("Keyboard initialized. Type something!\n\n");
+    terminal_write("\n*** System Ready ***\n");
+    terminal_write("- Exception handling: Active\n");
+    terminal_write("- Timer interrupts: 100 Hz\n");
+    terminal_write("- Keyboard: Ready\n\n");
+    terminal_write("Type commands and press Enter!\n\n");
     
     /* Interactive prompt loop */
     char input[256];

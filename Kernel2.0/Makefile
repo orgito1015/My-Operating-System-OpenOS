@@ -30,7 +30,7 @@ LDFLAGS += -Wl,--nmagic      # Don't align data segments to page boundaries
 LDFLAGS += -Wl,-z,noexecstack  # Mark stack as non-executable
 
 # Object files to link
-OBJS = boot.o kernel.o idt.o pic.o isr.o keyboard.o
+OBJS = boot.o kernel.o idt.o pic.o isr.o keyboard.o vmm.o exceptions_asm.o exceptions.o pmm.o timer.o
 
 # Default target: build the kernel
 all: $(TARGET).bin
@@ -40,7 +40,7 @@ boot.o: boot.S
 	$(CC) $(ASFLAGS) -c $< -o $@
 
 # Build main kernel
-kernel.o: kernel.c idt.h pic.h isr.h keyboard.h
+kernel.o: kernel.c idt.h pic.h isr.h keyboard.h exceptions.h timer.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Build interrupt descriptor table
@@ -59,12 +59,35 @@ isr.o: isr.S
 keyboard.o: keyboard.c keyboard.h pic.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Build virtual memory manager
+vmm.o: vmm.c vmm.h pmm.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build exception handler assembly stubs
+exceptions_asm.o: exceptions.S
+	$(CC) $(ASFLAGS) -c $< -o $@
+
+# Build exception handlers
+exceptions.o: exceptions.c exceptions.h idt.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build physical memory manager
+pmm.o: pmm.c pmm.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build timer driver
+timer.o: timer.c timer.h pic.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Link all objects into final kernel binary
 $(TARGET).bin: $(OBJS) linker.ld
 	$(CC) -T linker.ld -o $@ -m32 $(LDFLAGS) $(OBJS)
 
 # Run kernel in QEMU
+# Note: Direct kernel boot may not work with QEMU 7.0+ due to PVH ELF Note requirement
+# For best compatibility, use 'make run' from the root directory which boots via ISO
 run: $(TARGET).bin
+	@echo "Note: If you get 'Error loading uncompressed kernel', use 'make run' from root directory"
 	qemu-system-i386 -kernel $(TARGET).bin
 
 # Clean build artifacts
