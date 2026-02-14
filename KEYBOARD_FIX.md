@@ -27,7 +27,7 @@ While IRQ1 (keyboard) was being unmasked correctly, having IRQ0 masked could pot
 
 ## Fix Applied
 
-### Change 1: timer.c - Unmask IRQ0
+### Change: timer.c - Unmask IRQ0
 Added code to unmask IRQ0 in the PIC after configuring the timer:
 
 ```c
@@ -54,21 +54,7 @@ void timer_init(uint32_t frequency) {
 }
 ```
 
-### Change 2: keyboard.c - Diagnostic Output
-Added temporary diagnostic output to verify interrupts are firing:
-
-```c
-void keyboard_handler(void) {
-    /* DEBUG: Print a character to show interrupt fired */
-    terminal_put_char('K');
-    
-    /* Read scan code from keyboard */
-    uint8_t scancode = inb(KEYBOARD_DATA_PORT);
-    // ... rest of handler ...
-}
-```
-
-**Note:** This debug output should be removed after verification.
+This ensures IRQ0 is properly unmasked, allowing timer interrupts to fire at the configured frequency (100 Hz).
 
 ## Verification Steps
 
@@ -79,23 +65,14 @@ void keyboard_handler(void) {
    make clean && make run
    ```
 
-2. **Look for diagnostic output:**
-   - When you press ANY key, you should see a 'K' appear immediately
-   - This confirms the keyboard interrupt (IRQ1) is firing
-   - You'll see 'K' for both key press AND key release
+2. **Observe the boot messages:**
+   - System should initialize IDT, exceptions, PIC, timer, and keyboard
+   - Should display "*** System Ready ***" message
+   - Timer interrupts: 100 Hz
+   - Keyboard: Ready
+   - OpenOS> prompt appears
 
-3. **If 'K' appears when you press keys:**
-   - ✅ Interrupts are working correctly
-   - ✅ PIC remapping is correct (IRQ1 → vector 0x21)
-   - ✅ IDT is configured correctly
-   - ✅ ISR stub is functioning
-   - The keyboard handler is being called
-
-4. **If 'K' does NOT appear:**
-   - Check if interrupts are enabled (`sti` executed)
-   - Verify PIC mask (should have bit 1 clear)
-   - Check IDT gate at vector 0x21
-   - Verify IRQ1 handler address is not null
+3. **Test keyboard:**
 
 ## System Architecture Verification
 
@@ -193,17 +170,42 @@ The kernel relies on GRUB's GDT, which is standard for Multiboot kernels. The se
 3. **Test keyboard input:**
    - Click on the QEMU window to ensure it has focus
    - Press any key
-   - You should see 'K' appear (diagnostic output)
-   - The actual character should also appear
+   - Characters should appear as you type
    - Type "hello" and press Enter
-   - You should see: "KhKKKKK hello" where:
-     - Each 'K' is the diagnostic output for a key event
-     - "hello" is the actual text you typed
+   - You should see the prompt echo: "You typed: hello"
 
-4. **After verification:**
-   - Remove the debug line from keyboard.c
-   - Rebuild and test again
-   - Normal behavior should resume (no 'K' characters)
+4. **Verify behavior:**
+   - Characters appear immediately as you type
+   - Backspace works correctly
+   - Enter key completes the input and displays result
+
+## Debugging If Keyboard Still Doesn't Work
+
+If keyboard input still doesn't work after this fix, verify:
+
+1. **Interrupts enabled globally:**
+   - Verify `sti` instruction was executed at kernel.c:144
+   - Check IF flag in EFLAGS register
+
+2. **PIC mask status:**
+   - IRQ1 should be unmasked (bit 1 clear in PIC1_DATA)
+   - Expected mask after init: 0xFC (binary: 11111100)
+   - Both IRQ0 and IRQ1 should be enabled
+
+3. **IDT gate configuration:**
+   - Vector 0x21 should point to `irq1_handler`
+   - Flags should be 0x8E (present + interrupt gate)
+   - Verify handler address is not zero
+
+4. **QEMU window focus:**
+   - Ensure QEMU window has keyboard focus
+   - Click on the window before typing
+   - Try Alt+Tab to switch focus
+
+5. **Add diagnostic output:**
+   - Temporarily add `terminal_put_char('K');` at start of `keyboard_handler()`
+   - If 'K' appears when typing, handler is being called
+   - If not, interrupt isn't firing or reaching handler
 
 ## Structural Improvements
 
@@ -296,13 +298,11 @@ if ((uint32_t)irq1_handler == 0) {
 
 ## Conclusion
 
-The keyboard interrupt pipeline has been fixed by ensuring IRQ0 (timer) is properly unmasked after initialization. The diagnostic output added to the keyboard handler will help verify that interrupts are firing correctly.
+The keyboard interrupt pipeline has been fixed by ensuring IRQ0 (timer) is properly unmasked after initialization.
 
-**Primary Fix:** Added IRQ0 unmasking in `timer_init()` function
+**Primary Fix:** Added IRQ0 unmasking in `timer_init()` function in timer.c
 
-**Secondary Addition:** Added diagnostic output in `keyboard_handler()` (should be removed after testing)
-
-The interrupt pipeline architecture is sound:
+The fix ensures both timer and keyboard interrupts are properly enabled:
 - ✅ Boot sequence correct (cli → setup → sti)
 - ✅ PIC properly remapped
 - ✅ IDT correctly configured
