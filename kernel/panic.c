@@ -25,7 +25,6 @@ void kernel_panic(const char* message) {
 /* Kernel panic with additional context information */
 void kernel_panic_ext(const char* message, const char* file, int line) {
     (void)line;  /* Unused: Line number formatting requires sprintf, not yet implemented */
-    
     __asm__ __volatile__("cli");  /* Disable interrupts */
     
     console_set_color(0x0F, 0x04);  /* White text on red background */
