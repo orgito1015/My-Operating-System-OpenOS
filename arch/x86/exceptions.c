@@ -87,9 +87,81 @@ static void print_dec(uint32_t value) {
  * Main exception handler called from assembly stubs
  */
 void exception_handler(struct exception_registers *regs) {
-    /* Just halt immediately without trying to print anything */
-    (void)regs;  /* Suppress unused parameter warning */
+    /* Print exception header */
+    console_write("\n");
+    console_write("======================================\n");
+    console_write("    KERNEL PANIC - EXCEPTION!\n");
+    console_write("======================================\n");
+    console_write("\n");
     
+    /* Print exception type */
+    console_write("Exception: ");
+    if (regs->int_no < 32) {
+        console_write(exception_messages[regs->int_no]);
+    } else {
+        console_write("Unknown");
+    }
+    console_write(" (");
+    print_dec(regs->int_no);
+    console_write(")\n");
+    
+    /* Print error code if present */
+    console_write("Error Code: ");
+    print_hex(regs->err_code);
+    console_write("\n\n");
+    
+    /* Special handling for page faults */
+    if (regs->int_no == EXCEPTION_PAGE_FAULT) {
+        uint32_t faulting_address;
+        __asm__ __volatile__("mov %%cr2, %0" : "=r"(faulting_address));
+        
+        console_write("Page Fault Details:\n");
+        console_write("  Faulting Address: ");
+        print_hex(faulting_address);
+        console_write("\n");
+        
+        console_write("  Cause: ");
+        if (!(regs->err_code & 0x1)) console_write("Page not present ");
+        if (regs->err_code & 0x2) console_write("Write access ");
+        else console_write("Read access ");
+        if (regs->err_code & 0x4) console_write("(User mode)");
+        else console_write("(Kernel mode)");
+        console_write("\n\n");
+    }
+    
+    /* Print register dump */
+    console_write("Register Dump:\n");
+    console_write("  EAX="); print_hex(regs->eax);
+    console_write("  EBX="); print_hex(regs->ebx);
+    console_write("  ECX="); print_hex(regs->ecx);
+    console_write("  EDX="); print_hex(regs->edx);
+    console_write("\n");
+    
+    console_write("  ESI="); print_hex(regs->esi);
+    console_write("  EDI="); print_hex(regs->edi);
+    console_write("  EBP="); print_hex(regs->ebp);
+    console_write("  ESP="); print_hex(regs->esp);
+    console_write("\n");
+    
+    console_write("  EIP="); print_hex(regs->eip);
+    console_write("  CS="); print_hex(regs->cs);
+    console_write("  DS="); print_hex(regs->ds);
+    console_write("  EFLAGS="); print_hex(regs->eflags);
+    console_write("\n\n");
+    
+    /* Print stack information */
+    console_write("Stack Segment: ");
+    print_hex(regs->ss);
+    console_write("\n");
+    console_write("User ESP: ");
+    print_hex(regs->useresp);
+    console_write("\n\n");
+    
+    console_write("======================================\n");
+    console_write("System Halted - Cannot Continue\n");
+    console_write("======================================\n");
+    
+    /* Halt the system */
     __asm__ __volatile__("cli");
     while(1) {
         __asm__ __volatile__("hlt");

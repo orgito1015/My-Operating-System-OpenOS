@@ -8,8 +8,8 @@
 /* External C handler */
 .extern exception_handler
 
-/* Kernel data segment selector */
-.set KERNEL_DATA_SEGMENT, 0x10
+/* Kernel data segment selector (from GRUB's GDT) */
+.set KERNEL_DATA_SEGMENT, 0x18
 
 /* 
  * Exception stub macro for exceptions WITHOUT error code

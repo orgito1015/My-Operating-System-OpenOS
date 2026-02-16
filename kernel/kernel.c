@@ -59,22 +59,25 @@ void kmain(void) {
      * vmm_init();
      */
     
-    /* TEMPORARY: Do NOT enable interrupts yet to test if kernel works without them */
-    /* __asm__ __volatile__("sti"); */
+    /* Enable interrupts */
+    __asm__ __volatile__("sti");
     
-    /* TEMPORARY: Do NOT unmask timer interrupt */
-    /* pic_unmask_irq(0); */
+    /* Now that interrupts are enabled, unmask the timer IRQ */
+    pic_unmask_irq(0);
     
-    console_write("\n*** System Ready (interrupts DISABLED for testing) ***\n");
+    console_write("\n*** System Ready ***\n");
     console_write("- Exception handling: Active\n");
-    console_write("- Timer interrupts: DISABLED\n");
-    console_write("- Keyboard: DISABLED\n\n");
-    console_write("Kernel initialized successfully without interrupts.\n");
-    console_write("This confirms the boot process and console work correctly.\n\n");
+    console_write("- Timer interrupts: 100 Hz\n");
+    console_write("- Keyboard: Ready\n\n");
+    console_write("Type commands and press Enter!\n\n");
     
-    /* Halt the system */
-    console_write("Halting system...\n");
-    while(1) {
-        __asm__ __volatile__("hlt");
+    /* Interactive prompt loop */
+    char input[256];
+    while (1) {
+        console_write("OpenOS> ");
+        keyboard_get_line(input, sizeof(input));
+        console_write("You typed: ");
+        console_write(input);
+        console_write("\n");
     }
 }

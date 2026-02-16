@@ -2,8 +2,8 @@
  * OpenOS - Interrupt Service Routines (Assembly)
  */
 
-/* Kernel segment selectors */
-.set KERNEL_DATA_SEGMENT, 0x10
+/* Kernel segment selectors (from GRUB's GDT) */
+.set KERNEL_DATA_SEGMENT, 0x18
 
 .section .text
 

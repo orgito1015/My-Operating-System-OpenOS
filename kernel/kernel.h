@@ -11,9 +11,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* GDT segment selectors */
-#define KERNEL_CODE_SEGMENT 0x08
-#define KERNEL_DATA_SEGMENT 0x10
+/* GDT segment selectors (GRUB's GDT) */
+#define KERNEL_CODE_SEGMENT 0x10   /* GRUB uses 0x10 for code */
+#define KERNEL_DATA_SEGMENT 0x18   /* GRUB uses 0x18 for data */
 
 /* IDT gate flags */
 #define IDT_GATE_PRESENT    0x80
