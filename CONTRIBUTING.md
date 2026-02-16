@@ -105,7 +105,7 @@ Before submitting a pull request:
 We welcome contributions in:
 
 - **Bug Fixes**: Fix issues in existing code
-- **Features**: Implement items from the roadmap (see docs/roadmap.md)
+- **Features**: Implement items from the roadmap (see docs/roadmap/roadmap.md)
 - **Documentation**: Improve README, add tutorials, write explanations
 - **Code Quality**: Refactor code, add error checking, improve style
 - **Testing**: Add test cases, validation checks
