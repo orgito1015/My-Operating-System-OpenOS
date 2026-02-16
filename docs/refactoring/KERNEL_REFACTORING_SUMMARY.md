@@ -297,10 +297,10 @@ The kernel now has a solid, professional architecture that will support OpenOS d
 ## Files Reference
 
 ### Documentation
-- **docs/ARCHITECTURE.md** - Complete architecture guide
-- **docs/REFACTORING.md** - Migration and refactoring details
-- **docs/KERNEL_REFACTORING_SUMMARY.md** - This file
-- **README.md** - Updated project overview
+- **../architecture/ARCHITECTURE.md** - Complete architecture guide
+- **REFACTORING.md** - Migration and refactoring details
+- **KERNEL_REFACTORING_SUMMARY.md** - This file
+- **../../README.md** - Updated project overview
 
 ### Key Source Files
 - **kernel/kernel.c** - Main kernel entry point

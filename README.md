@@ -36,7 +36,7 @@ OpenOS follows a **modular monolithic kernel architecture**:
 - ✅ Scalable for future growth
 - ✅ Industry-standard organization
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
+See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for detailed architecture documentation.
 
 ## ✨ Features
 
@@ -65,7 +65,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture docum
 - Shell and userland programs
 - Simple filesystem
 - Advanced scheduling
-- And more! See [roadmap.md](docs/roadmap.md)
+- And more! See [roadmap.md](docs/roadmap/roadmap.md)
 
 ## 🚀 Quick Start
 
@@ -185,7 +185,7 @@ OpenOS Phase 0 includes complete implementations of:
 - **Timer Driver** - PIT configured at 100 Hz for future scheduling
 - **Enhanced Kernel** - Clean boot messages, progress indicators, and modular design
 
-For complete implementation details, see [docs/UPGRADE_PHASE0.md](docs/UPGRADE_PHASE0.md).
+For complete implementation details, see [docs/roadmap/UPGRADE_PHASE0.md](docs/roadmap/UPGRADE_PHASE0.md).
 
 ## 🧪 Testing Exception Handling
 
@@ -237,7 +237,7 @@ If you prefer to set up VirtualBox manually:
 
 4. Start the VM and enjoy!
 
-**Troubleshooting:** If you encounter any issues with VirtualBox, see the [VirtualBox Troubleshooting Guide](docs/VIRTUALBOX_TROUBLESHOOTING.md).
+**Troubleshooting:** If you encounter any issues with VirtualBox, see the [VirtualBox Troubleshooting Guide](docs/virtualization/VIRTUALBOX_TROUBLESHOOTING.md).
 
 #### Option 3: ISO in QEMU
 
@@ -276,17 +276,27 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
 ## 📚 Documentation
 
-Additional documentation can be found in the `/docs` directory:
+The `/docs` directory contains comprehensive documentation organized by topic:
 
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete architecture documentation
-- **[REFACTORING.md](docs/REFACTORING.md)** - Refactoring guide and migration information
-- **[UPGRADE_PHASE0.md](docs/UPGRADE_PHASE0.md)** - Complete Phase 0 implementation guide
-- **[MULTIBOOT_FIX.md](docs/MULTIBOOT_FIX.md)** - Technical deep-dive: GRUB multiboot header fix
-- **[OS_EVOLUTION_STRATEGY.md](docs/OS_EVOLUTION_STRATEGY.md)** - 36-week development roadmap
-- **[VIRTUALBOX_QUICKSTART.md](docs/VIRTUALBOX_QUICKSTART.md)** - Quick start guide for VirtualBox
-- **[VIRTUALBOX_TROUBLESHOOTING.md](docs/VIRTUALBOX_TROUBLESHOOTING.md)** - VirtualBox troubleshooting
-- **[architecture.md](docs/architecture.md)** - System architecture overview
-- **[roadmap.md](docs/roadmap.md)** - Future development plans
+- **[Documentation Index](docs/README.md)** - Complete documentation guide and structure
+- **Architecture**: System design and implementation details
+  - [Architecture Overview](docs/architecture/ARCHITECTURE.md) - Modular monolithic architecture
+  - [System Overview](docs/architecture/system_overview.md) - Boot process and memory layout
+- **Roadmap**: Development plans and milestones
+  - [Roadmap](docs/roadmap/roadmap.md) - Future development plans
+  - [Phase 0 Completion](docs/roadmap/UPGRADE_PHASE0.md) - Foundation implementation guide
+  - [Evolution Strategy](docs/roadmap/OS_EVOLUTION_STRATEGY.md) - 36-week development roadmap
+- **Boot**: Bootloader and startup documentation
+  - [Multiboot Fix](docs/boot/MULTIBOOT_FIX.md) - GRUB multiboot header technical details
+- **Virtualization**: Running OpenOS in VMs
+  - [VirtualBox Quickstart](docs/virtualization/VIRTUALBOX_QUICKSTART.md) - Quick start guide
+  - [VirtualBox Troubleshooting](docs/virtualization/VIRTUALBOX_TROUBLESHOOTING.md) - Troubleshooting guide
+- **Refactoring**: Code reorganization history
+  - [Refactoring Guide](docs/refactoring/REFACTORING.md) - Migration information
+- **Learning**: Educational materials and progress tracking
+  - [Learning Index](docs/learning/LEARNING_INDEX.md) - Current focus and completed topics
+  - [Development Journal](docs/journal/DEVELOPMENT_LOG.md) - Development progress log
+  - [Chapters](docs/chapters/) - Structured learning by topic
 
 ## 📊 Project Stats
 
