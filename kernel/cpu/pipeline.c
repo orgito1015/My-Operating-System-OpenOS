@@ -2,6 +2,12 @@
  * OpenOS - 5-Stage Pipelined CPU Simulator
  * 
  * Implementation of a classic RISC 5-stage pipeline.
+ * 
+ * EDUCATIONAL NOTE: This is a structural pipeline simulation focused on
+ * demonstrating pipeline mechanics, hazard detection, and performance
+ * characteristics (CPI, stalls). It does not implement full ALU operations
+ * or data computation. The purpose is to show how instructions flow through
+ * pipeline stages and how hazards affect performance.
  */
 
 #include "pipeline.h"
@@ -89,7 +95,12 @@ void pipeline_cycle(PipelineCPU *cpu, uint32_t *memory, uint32_t mem_size) {
     if (cpu->stages[STAGE_WB].instr.valid) {
         Instruction instr = cpu->stages[STAGE_WB].instr;
         if (instr.rd != 0 && instr.opcode != 0x23) {  /* Not a store */
-            cpu->registers[instr.rd] = instr.immediate;  /* Simplified write */
+            /* Note: This is a simplified educational simulation.
+             * In a real pipeline, the result would be computed in EX stage
+             * and carried through MEM to WB. Here we use immediate as a
+             * placeholder to demonstrate the pipeline flow without full
+             * ALU implementation. */
+            cpu->registers[instr.rd] = instr.immediate;
         }
         cpu->instruction_count++;
         /* WB completes, stage becomes empty */
