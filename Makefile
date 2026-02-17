@@ -52,7 +52,10 @@ ARCH_OBJS = $(ARCH_DIR)/boot.o \
 
 # Kernel object files
 KERNEL_OBJS = $(KERNEL_DIR)/kernel.o \
-              $(KERNEL_DIR)/panic.o
+              $(KERNEL_DIR)/panic.o \
+              $(KERNEL_DIR)/string.o \
+              $(KERNEL_DIR)/shell.o \
+              $(KERNEL_DIR)/commands.o
 
 # CPU simulation object files
 CPU_DIR = $(KERNEL_DIR)/cpu
@@ -105,6 +108,15 @@ $(KERNEL_DIR)/kernel.o: $(KERNEL_DIR)/kernel.c $(KERNEL_DIR)/kernel.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(KERNEL_DIR)/panic.o: $(KERNEL_DIR)/panic.c $(KERNEL_DIR)/panic.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/string.o: $(KERNEL_DIR)/string.c $(KERNEL_DIR)/string.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/shell.o: $(KERNEL_DIR)/shell.c $(KERNEL_DIR)/shell.h $(KERNEL_DIR)/string.h $(KERNEL_DIR)/commands.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/commands.o: $(KERNEL_DIR)/commands.c $(KERNEL_DIR)/commands.h $(KERNEL_DIR)/shell.h $(KERNEL_DIR)/string.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # CPU simulation files

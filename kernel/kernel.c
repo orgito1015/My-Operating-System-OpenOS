@@ -6,6 +6,7 @@
  */
 
 #include "kernel.h"
+#include "shell.h"
 #include "../arch/x86/idt.h"
 #include "../arch/x86/pic.h"
 #include "../arch/x86/isr.h"
@@ -69,15 +70,16 @@ void kmain(void) {
     console_write("- Exception handling: Active\n");
     console_write("- Timer interrupts: 100 Hz\n");
     console_write("- Keyboard: Ready\n\n");
-    console_write("Type commands and press Enter!\n\n");
+    console_write("Type 'help' for available commands.\n\n");
     
-    /* Interactive prompt loop */
+    /* Initialize shell */
+    shell_init();
+    
+    /* Interactive shell loop */
     char input[256];
     while (1) {
         console_write("OpenOS> ");
         keyboard_get_line(input, sizeof(input));
-        console_write("You typed: ");
-        console_write(input);
-        console_write("\n");
+        shell_execute(input);
     }
 }
