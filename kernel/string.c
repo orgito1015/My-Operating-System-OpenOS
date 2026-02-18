@@ -206,7 +206,22 @@ int strncmp(const char* str1, const char* str2, size_t n) {
     return 0;
 }
 
-/* Integer to ASCII conversion */
+/**
+ * Integer to ASCII conversion
+ * 
+ * Converts an integer value to a string representation in the specified base.
+ * 
+ * @param value The integer value to convert (can be negative for base 10)
+ * @param str Buffer to store the resulting string (must be large enough)
+ * @param base Numeric base for conversion (2-36, typically 10 or 16)
+ * @return Pointer to the result string (same as str parameter)
+ * 
+ * Notes:
+ * - For base 10, negative numbers are prefixed with '-'
+ * - For other bases, the absolute value is used
+ * - Base must be between 2 and 36 (returns empty string for invalid base)
+ * - Caller must ensure buffer is large enough (typically 33 bytes for safety)
+ */
 char* itoa(int value, char* str, int base) {
     char* ptr = str;
     char* ptr1 = str;

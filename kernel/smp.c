@@ -97,7 +97,15 @@ uint32_t smp_get_cpu_count(void) {
 
 /* Get current CPU ID (simplified - always return 0 for now) */
 uint32_t smp_get_current_cpu(void) {
-    return 0; /* TODO: Read from APIC */
+    /* TODO: Read from APIC 
+     * Currently always returns BSP (Bootstrap Processor) ID of 0.
+     * This is safe for single-threaded operation but means:
+     * - All code executes on CPU 0
+     * - Per-CPU data structures are not utilized
+     * - CPU affinity cannot be enforced
+     * Once APIC is implemented, this should read the local APIC ID.
+     */
+    return 0;
 }
 
 /* Get CPU info */

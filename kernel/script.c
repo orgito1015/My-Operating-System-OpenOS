@@ -142,6 +142,20 @@ int script_parse_for(const char* statement) {
     return 0;
 }
 
+/* Helper function to trim leading and trailing whitespace */
+static void trim_whitespace(char* str, char** start, char** end) {
+    /* Trim leading whitespace */
+    *start = str;
+    while (**start == ' ' || **start == '\t') (*start)++;
+    
+    /* Trim trailing whitespace */
+    *end = *start + strlen(*start) - 1;
+    while (*end > *start && (**end == ' ' || **end == '\t' || **end == '\0')) {
+        **end = '\0';
+        (*end)--;
+    }
+}
+
 /* Execute a script */
 int script_execute(const char* script) {
     if (!script) return -1;
@@ -163,20 +177,16 @@ int script_execute(const char* script) {
                 if (equals) {
                     *equals = '\0';
                     
-                    /* Trim whitespace from variable name */
-                    char* var_name = line;
-                    while (*var_name == ' ' || *var_name == '\t') var_name++;
-                    char* var_end = equals - 1;
-                    while (var_end > var_name && (*var_end == ' ' || *var_end == '\t')) {
-                        *var_end = '\0';
-                        var_end--;
-                    }
+                    /* Trim whitespace from variable name and value */
+                    char* var_start;
+                    char* var_end;
+                    trim_whitespace(line, &var_start, &var_end);
                     
-                    /* Trim whitespace from value */
-                    char* value = equals + 1;
-                    while (*value == ' ' || *value == '\t') value++;
+                    char* val_start;
+                    char* val_end;
+                    trim_whitespace(equals + 1, &val_start, &val_end);
                     
-                    script_set_var(var_name, value);
+                    script_set_var(var_start, val_start);
                 }
                 /* Check for if statement */
                 else if (strncmp(line, "if ", 3) == 0) {

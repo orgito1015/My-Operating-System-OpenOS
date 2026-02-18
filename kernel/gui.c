@@ -211,9 +211,28 @@ void gui_clear_screen(uint32_t color) {
 }
 
 /* Placeholder memory allocation functions (to be replaced with real heap) */
+
+/**
+ * Simple bump allocator for kernel memory allocation
+ * 
+ * This is a placeholder implementation that will be replaced with a proper
+ * heap allocator. Uses a simple bump pointer with 8-byte alignment.
+ * 
+ * Limitations:
+ * - No free support (kfree is a no-op)
+ * - Limited to 64KB total allocation
+ * - No boundary checking beyond heap size
+ * 
+ * @param size Number of bytes to allocate
+ * @return Pointer to allocated memory, or NULL if out of memory
+ */
 void* kmalloc(size_t size) {
     static uint8_t heap[65536];
     static size_t heap_pos = 0;
+    
+    /* Align to 8-byte boundary for performance and safety */
+    const size_t alignment = 8;
+    heap_pos = (heap_pos + alignment - 1) & ~(alignment - 1);
     
     if (heap_pos + size > sizeof(heap)) return NULL;
     void* ptr = &heap[heap_pos];
