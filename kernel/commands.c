@@ -646,8 +646,13 @@ void cmd_test_net(int argc, char** argv) {
         
         console_write("MAC address: ");
         for (int i = 0; i < 6; i++) {
-            itoa(dev->mac.addr[i], buf, 16);
-            console_write(buf);
+            /* Format as two-digit hex with leading zero */
+            unsigned int byte = dev->mac.addr[i];
+            char hex_buf[3];
+            hex_buf[0] = "0123456789abcdef"[byte >> 4];
+            hex_buf[1] = "0123456789abcdef"[byte & 0xF];
+            hex_buf[2] = '\0';
+            console_write(hex_buf);
             if (i < 5) console_write(":");
         }
         console_write("\n");

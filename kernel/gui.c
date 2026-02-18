@@ -73,8 +73,11 @@ void gui_draw_filled_rect(rect_t* rect, uint32_t color) {
 void gui_draw_line(int x1, int y1, int x2, int y2, uint32_t color) {
     int dx = x2 - x1;
     int dy = y2 - y1;
-    int steps = (dx > dy ? dx : dy);
-    if (steps < 0) steps = -steps;
+    
+    /* Calculate absolute values */
+    int abs_dx = dx < 0 ? -dx : dx;
+    int abs_dy = dy < 0 ? -dy : dy;
+    int steps = abs_dx > abs_dy ? abs_dx : abs_dy;
     
     float x_inc = (float)dx / (float)steps;
     float y_inc = (float)dy / (float)steps;

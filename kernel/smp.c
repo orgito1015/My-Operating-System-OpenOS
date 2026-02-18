@@ -43,7 +43,12 @@ static uint32_t detect_cpu_count(void) {
     
     /* Check for multi-threading support */
     if (edx & (1 << 28)) {
-        /* HTT bit is set, check logical processor count */
+        /* HTT bit is set, check logical processor count
+         * Note: This returns the maximum number of addressable IDs for logical
+         * processors in this physical package. This may include hyper-threading
+         * logical processors, not just physical cores. For a more accurate
+         * physical core count, CPUID leaf 0x0B or 0x1F would be needed.
+         */
         uint32_t logical_count = (edx >> 16) & 0xFF;
         if (logical_count > 1) {
             return logical_count;

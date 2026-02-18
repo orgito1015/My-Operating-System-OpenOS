@@ -162,7 +162,21 @@ int script_execute(const char* script) {
                 char* equals = strchr(line, '=');
                 if (equals) {
                     *equals = '\0';
-                    script_set_var(line, equals + 1);
+                    
+                    /* Trim whitespace from variable name */
+                    char* var_name = line;
+                    while (*var_name == ' ' || *var_name == '\t') var_name++;
+                    char* var_end = equals - 1;
+                    while (var_end > var_name && (*var_end == ' ' || *var_end == '\t')) {
+                        *var_end = '\0';
+                        var_end--;
+                    }
+                    
+                    /* Trim whitespace from value */
+                    char* value = equals + 1;
+                    while (*value == ' ' || *value == '\t') value++;
+                    
+                    script_set_var(var_name, value);
                 }
                 /* Check for if statement */
                 else if (strncmp(line, "if ", 3) == 0) {

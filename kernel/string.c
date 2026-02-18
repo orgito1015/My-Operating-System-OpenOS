@@ -221,7 +221,9 @@ char* itoa(int value, char* str, int base) {
     do {
         tmp_value = value;
         value /= base;
-        *ptr++ = "0123456789abcdefghijklmnopqrstuvwxyz"[tmp_value - value * base];
+        int digit_value = tmp_value - value * base;
+        if (digit_value < 0) digit_value = -digit_value;  /* Use absolute value for digit */
+        *ptr++ = "0123456789abcdefghijklmnopqrstuvwxyz"[digit_value];
     } while (value);
 
     if (tmp_value < 0 && base == 10) {
