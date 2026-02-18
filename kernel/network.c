@@ -129,6 +129,7 @@ int net_socket_recv(socket_t* socket, void* buffer, size_t size) {
     if (!socket || !socket->is_open || !buffer) return -1;
     
     /* TODO: Implement actual socket receive */
+    (void)size;  /* Parameter reserved for future implementation */
     return 0;
 }
 
