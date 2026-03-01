@@ -63,7 +63,12 @@ See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for d
 - ✅ **Performance Counters** - CPI, MIPS, cache statistics
 - ✅ **Benchmark Suite** - Compare pipeline vs single-cycle performance
 
-### Phase 1 - Process Management ( Planned)
+### Phase 0.6 - Coreutils-style Shell Commands (✅ Complete)
+- ✅ **`ls`** - List directory contents with flags: `-a` (show dotfiles), `-l` (long format), `-R` (recursive), `-h` (help)
+- ✅ **`cat`** - Display file contents with flags: `-n` (line numbers), `-h` (help), multiple file support
+- ✅ **`stat`** - Show file/directory metadata: name, type, size, inode number
+
+### Phase 1 - Process Management (Planned)
 - 🔲 Process structures and state management
 - 🔲 Context switching between processes
 - 🔲 Round-robin scheduler
@@ -221,6 +226,101 @@ OpenOS> _
 ```
 
 Type on your keyboard and press Enter to interact with the shell!
+
+## Shell Commands
+
+OpenOS includes a built-in shell with the following commands:
+
+| Command | Description |
+|---------|-------------|
+| `help` | Display list of available commands |
+| `clear` | Clear the console screen |
+| `echo [text]` | Print text to the console |
+| `uname` | Display OS name and version |
+| `uptime` | Show system uptime |
+| `pwd` | Print current working directory |
+| `ls [-a] [-l] [-R] [-h] [path]` | List directory contents |
+| `cd <path>` | Change current directory |
+| `cat [-n] [-h] file [file...]` | Display file contents |
+| `stat [-h] path` | Show file or directory metadata |
+| `reboot` | Reboot the system |
+
+### `ls` — List Directory Contents
+
+```
+ls [-a] [-l] [-R] [-h] [path]
+```
+
+| Flag | Description |
+|------|-------------|
+| `-a` | Include entries starting with `.` (dotfiles) |
+| `-l` | Long format: shows type (`d`/`-`), size in bytes, and name |
+| `-R` | Recursively list subdirectories |
+| `-h` | Show help |
+
+**Examples:**
+
+```
+OpenOS> ls /
+bin/  etc/  home/  tmp/
+
+OpenOS> ls -l /etc
+-        59  motd.txt
+
+OpenOS> ls -R /
+/:
+bin/  etc/  home/  tmp/
+/bin:
+/etc:
+motd.txt
+/home:
+/tmp:
+```
+
+### `cat` — Display File Contents
+
+```
+cat [-n] [-h] file [file...]
+```
+
+| Flag | Description |
+|------|-------------|
+| `-n` | Number all output lines |
+| `-h` | Show help |
+
+**Examples:**
+
+```
+OpenOS> cat /etc/motd.txt
+Welcome to OpenOS!
+This is a test file in the filesystem.
+
+OpenOS> cat -n /etc/motd.txt
+     1  Welcome to OpenOS!
+     2  This is a test file in the filesystem.
+```
+
+### `stat` — Show File Metadata
+
+```
+stat [-h] path
+```
+
+**Example:**
+
+```
+OpenOS> stat /etc/motd.txt
+  File: motd.txt
+  Type: regular file
+  Size: 59 bytes
+ Inode: 6
+
+OpenOS> stat /etc
+  File: etc
+  Type: directory
+  Size: 0 bytes
+ Inode: 2
+```
 
 ##  Phase 0 Implementation Details
 

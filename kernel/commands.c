@@ -66,9 +66,10 @@ void commands_register_all(void) {
     shell_register_command("uname", "Display OS name and version", cmd_uname);
     shell_register_command("uptime", "Show system uptime", cmd_uptime);
     shell_register_command("pwd", "Print current working directory", cmd_pwd);
-    shell_register_command("ls", "List directory contents", cmd_ls);
+    shell_register_command("ls", "List directory contents [-a] [-l] [-R]", cmd_ls);
     shell_register_command("cd", "Change directory", cmd_cd);
-    shell_register_command("cat", "Display file contents", cmd_cat);
+    shell_register_command("cat", "Display file contents [-n] [file...]", cmd_cat);
+    shell_register_command("stat", "Show file or directory metadata", cmd_stat);
     shell_register_command("reboot", "Reboot the system", cmd_reboot);
     
     /* New feature test commands */
@@ -265,62 +266,202 @@ void cmd_pwd(int argc, char** argv) {
 }
 
 /*
- * LS command - List directory contents
+ * Helper: print a uint32_t padded to a fixed width (right-aligned, space-padded)
  */
-void cmd_ls(int argc, char** argv) {
-    vfs_node_t* dir;
-    
-    if (argc < 2) {
-        /* List current directory */
-        dir = kernel_get_current_directory();
+static void print_number_padded(uint32_t value, int width) {
+    /* 11 bytes: 10 digits max for uint32_t (4294967295) + null terminator */
+    char buf[11];
+    int i = 10;
+    buf[i] = '\0';
+    if (value == 0) {
+        buf[--i] = '0';
     } else {
-        /* List specified directory */
-        if (argv[1][0] == '/') {
-            /* Absolute path */
-            dir = vfs_resolve_path(argv[1]);
-        } else {
-            /* Relative path - build absolute path */
-            char abs_path[VFS_MAX_PATH_LENGTH];
-            build_absolute_path(argv[1], abs_path, VFS_MAX_PATH_LENGTH);
-            dir = vfs_resolve_path(abs_path);
-        }
-        
-        if (!dir) {
-            console_write("ls: cannot access '");
-            console_write(argv[1]);
-            console_write("': No such file or directory\n");
-            return;
+        while (value > 0 && i > 0) {
+            buf[--i] = '0' + (value % 10);
+            value /= 10;
         }
     }
-    
-    if (!dir) {
-        console_write("ls: error accessing directory\n");
-        return;
+    /* Calculate number of digits */
+    int digits = 10 - i;
+    for (int j = digits; j < width; j++) {
+        console_put_char(' ');
     }
-    
-    if (dir->type != NODE_DIRECTORY) {
-        if (argc >= 2 && argv[1]) {
-            console_write("ls: '");
-            console_write(argv[1]);
-            console_write("': Not a directory\n");
-        } else {
-            console_write("ls: Not a directory\n");
-        }
-        return;
+    console_write(&buf[i]);
+}
+
+/*
+ * Helper: list a single directory, used by cmd_ls for default and -R mode.
+ * flag_long: show long format; flag_all: show dotfiles; print_header: print path header for -R
+ */
+static void ls_list_dir(vfs_node_t* dir, int flag_long, int flag_all,
+                        int print_header, const char* header_path) {
+    if (print_header) {
+        console_write(header_path);
+        console_write(":\n");
     }
-    
-    /* List directory contents */
+
     for (uint32_t i = 0; i < dir->child_count; i++) {
         vfs_node_t* child = dir->children[i];
-        if (child) {
+        if (!child) continue;
+
+        /* Skip dotfiles unless -a is set */
+        if (!flag_all && child->name[0] == '.') continue;
+
+        if (flag_long) {
+            /* Long format: type size name */
+            console_put_char(child->type == NODE_DIRECTORY ? 'd' : '-');
+            console_write("  ");
+            print_number_padded(child->length, 8);
+            console_write("  ");
             console_write(child->name);
             if (child->type == NODE_DIRECTORY) {
-                console_write("/");
+                console_put_char('/');
             }
-            console_write(" ");
+            console_put_char('\n');
+        } else {
+            console_write(child->name);
+            if (child->type == NODE_DIRECTORY) {
+                console_put_char('/');
+            }
+            console_put_char(' ');
         }
     }
-    console_write("\n");
+
+    if (!flag_long) {
+        console_put_char('\n');
+    }
+}
+
+/*
+ * Helper: recursively list directories for -R flag.
+ * path_buf must be at least VFS_MAX_PATH_LENGTH bytes.
+ */
+static void ls_recursive(vfs_node_t* dir, int flag_long, int flag_all,
+                         char* path_buf) {
+    ls_list_dir(dir, flag_long, flag_all, 1, path_buf);
+
+    /* Recurse into subdirectories */
+    for (uint32_t i = 0; i < dir->child_count; i++) {
+        vfs_node_t* child = dir->children[i];
+        if (!child || child->type != NODE_DIRECTORY) continue;
+        if (!flag_all && child->name[0] == '.') continue;
+
+        /* Build child path */
+        char child_path[VFS_MAX_PATH_LENGTH];
+        string_copy(child_path, path_buf);
+        /* Avoid double slash at root */
+        if (child_path[0] == '/' && child_path[1] == '\0') {
+            string_concat(child_path, child->name);
+        } else {
+            string_concat(child_path, "/");
+            string_concat(child_path, child->name);
+        }
+        ls_recursive(child, flag_long, flag_all, child_path);
+    }
+}
+
+/*
+ * LS command - List directory contents
+ * Usage: ls [-a] [-l] [-R] [-h|--help] [path]
+ */
+void cmd_ls(int argc, char** argv) {
+    int flag_all = 0;
+    int flag_long = 0;
+    int flag_recursive = 0;
+    const char* path_arg = 0;
+
+    /* Parse arguments */
+    for (int i = 1; i < argc; i++) {
+        if (string_compare(argv[i], "--help") == 0 || string_compare(argv[i], "-h") == 0) {
+            console_write("Usage: ls [-a] [-l] [-R] [-h] [path]\n");
+            console_write("  -a    include entries starting with '.'\n");
+            console_write("  -l    long listing format (type, size, name)\n");
+            console_write("  -R    list subdirectories recursively\n");
+            console_write("  -h    show this help message\n");
+            return;
+        } else if (argv[i][0] == '-' && argv[i][1] != '\0') {
+            /* Flag argument: parse each character */
+            for (int j = 1; argv[i][j] != '\0'; j++) {
+                switch (argv[i][j]) {
+                    case 'a': flag_all = 1; break;
+                    case 'l': flag_long = 1; break;
+                    case 'R': flag_recursive = 1; break;
+                    default:
+                        console_write("ls: invalid option -- '");
+                        console_put_char(argv[i][j]);
+                        console_write("'\nTry 'ls -h' for more information.\n");
+                        return;
+                }
+            }
+        } else {
+            path_arg = argv[i];
+        }
+    }
+
+    vfs_node_t* dir;
+
+    if (!path_arg) {
+        dir = kernel_get_current_directory();
+    } else if (path_arg[0] == '/') {
+        dir = vfs_resolve_path(path_arg);
+    } else {
+        char abs_path[VFS_MAX_PATH_LENGTH];
+        build_absolute_path(path_arg, abs_path, VFS_MAX_PATH_LENGTH);
+        dir = vfs_resolve_path(abs_path);
+    }
+
+    if (!dir) {
+        console_write("ls: cannot access '");
+        console_write(path_arg ? path_arg : ".");
+        console_write("': No such file or directory\n");
+        return;
+    }
+
+    if (dir->type != NODE_DIRECTORY) {
+        /* Single file: just print its info */
+        if (flag_long) {
+            console_put_char('-');
+            console_write("  ");
+            print_number_padded(dir->length, 8);
+            console_write("  ");
+            console_write(dir->name);
+            console_put_char('\n');
+        } else {
+            console_write(dir->name);
+            console_put_char('\n');
+        }
+        return;
+    }
+
+    if (flag_recursive) {
+        /* Build starting path string */
+        char start_path[VFS_MAX_PATH_LENGTH];
+        if (path_arg) {
+            string_copy(start_path, path_arg);
+        } else {
+            /* Use current directory path */
+            vfs_node_t* cur = dir;
+            start_path[0] = '\0';
+            if (cur->parent == cur) {
+                string_copy(start_path, "/");
+            } else {
+                char temp[VFS_MAX_PATH_LENGTH];
+                while (cur && cur->parent != cur) {
+                    string_copy(temp, "/");
+                    string_concat(temp, cur->name);
+                    string_concat(temp, start_path);
+                    string_copy(start_path, temp);
+                    cur = cur->parent;
+                }
+                if (start_path[0] == '\0') {
+                    string_copy(start_path, "/");
+                }
+            }
+        }
+        ls_recursive(dir, flag_long, flag_all, start_path);
+    } else {
+        ls_list_dir(dir, flag_long, flag_all, 0, 0);
+    }
 }
 
 /*
@@ -378,54 +519,169 @@ void cmd_cd(int argc, char** argv) {
 
 /*
  * CAT command - Display file contents
+ * Usage: cat [-n] [-h|--help] file [file...]
  */
 void cmd_cat(int argc, char** argv) {
     /* Static buffer to avoid large stack allocation */
     static uint8_t buffer[VFS_MAX_FILE_SIZE];
-    
+
+    int flag_number = 0;
+    int file_count = 0;
+
+    /* First pass: check for help flag and count files */
+    for (int i = 1; i < argc; i++) {
+        if (string_compare(argv[i], "--help") == 0 || string_compare(argv[i], "-h") == 0) {
+            console_write("Usage: cat [-n] [-h] file [file...]\n");
+            console_write("  -n    number output lines\n");
+            console_write("  -h    show this help message\n");
+            return;
+        } else if (string_compare(argv[i], "-n") == 0) {
+            flag_number = 1;
+        } else if (argv[i][0] == '-' && argv[i][1] != '\0') {
+            console_write("cat: invalid option '");
+            console_write(argv[i]);
+            console_write("'\nTry 'cat -h' for more information.\n");
+            return;
+        } else {
+            file_count++;
+        }
+    }
+
+    if (file_count == 0) {
+        console_write("Usage: cat [-n] file [file...]\n");
+        return;
+    }
+
+    /* Second pass: process each file */
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') continue;  /* skip flags */
+
+        vfs_node_t* file;
+        if (argv[i][0] == '/') {
+            file = vfs_resolve_path(argv[i]);
+        } else {
+            char abs_path[VFS_MAX_PATH_LENGTH];
+            build_absolute_path(argv[i], abs_path, VFS_MAX_PATH_LENGTH);
+            file = vfs_resolve_path(abs_path);
+        }
+
+        if (!file) {
+            console_write("cat: ");
+            console_write(argv[i]);
+            console_write(": No such file or directory\n");
+            continue;
+        }
+
+        if (file->type != NODE_FILE) {
+            console_write("cat: ");
+            console_write(argv[i]);
+            console_write(": Is a directory\n");
+            continue;
+        }
+
+        ssize_t bytes_read = vfs_read(file, 0, file->length, buffer);
+        if (bytes_read < 0) {
+            console_write("cat: ");
+            console_write(argv[i]);
+            console_write(": Error reading file\n");
+            continue;
+        }
+
+        if (flag_number) {
+            /* Print with line numbers */
+            uint32_t line_num = 1;
+            int at_line_start = 1;
+            for (ssize_t j = 0; j < bytes_read; j++) {
+                if (at_line_start) {
+                    print_number_padded(line_num, 6);
+                    console_write("  ");
+                    at_line_start = 0;
+                }
+                console_put_char((char)buffer[j]);
+                if (buffer[j] == '\n') {
+                    line_num++;
+                    at_line_start = 1;
+                }
+            }
+            /* Ensure last line (without trailing newline) still counted */
+        } else {
+            for (ssize_t j = 0; j < bytes_read; j++) {
+                console_put_char((char)buffer[j]);
+            }
+        }
+    }
+}
+
+/*
+ * STAT command - Show file or directory metadata
+ * Usage: stat [-h|--help] path
+ */
+void cmd_stat(int argc, char** argv) {
     if (argc < 2) {
-        console_write("Usage: cat <filename>\n");
+        console_write("Usage: stat [-h] path\n");
         return;
     }
-    
-    vfs_node_t* file;
-    
-    if (argv[1][0] == '/') {
-        /* Absolute path */
-        file = vfs_resolve_path(argv[1]);
+
+    /* Check for help flag */
+    for (int i = 1; i < argc; i++) {
+        if (string_compare(argv[i], "--help") == 0 || string_compare(argv[i], "-h") == 0) {
+            console_write("Usage: stat [-h] path\n");
+            console_write("  Display metadata for a file or directory.\n");
+            console_write("  Shows: name, type, size, and inode number.\n");
+            console_write("  -h    show this help message\n");
+            return;
+        }
+    }
+
+    /* Find the last non-flag argument as path */
+    const char* path_arg = 0;
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') {
+            path_arg = argv[i];
+        }
+    }
+
+    if (!path_arg) {
+        console_write("stat: missing operand\n");
+        console_write("Try 'stat -h' for more information.\n");
+        return;
+    }
+
+    vfs_node_t* node;
+    if (path_arg[0] == '/') {
+        node = vfs_resolve_path(path_arg);
     } else {
-        /* Relative path - build absolute path */
         char abs_path[VFS_MAX_PATH_LENGTH];
-        build_absolute_path(argv[1], abs_path, VFS_MAX_PATH_LENGTH);
-        file = vfs_resolve_path(abs_path);
+        build_absolute_path(path_arg, abs_path, VFS_MAX_PATH_LENGTH);
+        node = vfs_resolve_path(abs_path);
     }
-    
-    if (!file) {
-        console_write("cat: ");
-        console_write(argv[1]);
-        console_write(": No such file or directory\n");
+
+    if (!node) {
+        console_write("stat: cannot stat '");
+        console_write(path_arg);
+        console_write("': No such file or directory\n");
         return;
     }
-    
-    if (file->type != NODE_FILE) {
-        console_write("cat: ");
-        console_write(argv[1]);
-        console_write(": Is a directory\n");
-        return;
+
+    console_write("  File: ");
+    console_write(node->name);
+    console_put_char('\n');
+
+    console_write("  Type: ");
+    if (node->type == NODE_DIRECTORY) {
+        console_write("directory\n");
+    } else {
+        console_write("regular file\n");
     }
-    
-    /* Read and display file contents */
-    ssize_t bytes_read = vfs_read(file, 0, file->length, buffer);
-    
-    if (bytes_read < 0) {
-        console_write("cat: error reading file\n");
-        return;
-    }
-    
-    /* Display contents */
-    for (ssize_t i = 0; i < bytes_read; i++) {
-        console_put_char((char)buffer[i]);
-    }
+
+    /* Use print_number (uint32_t, no int cast) for safe display */
+    console_write("  Size: ");
+    print_number(node->length);
+    console_write(" bytes\n");
+
+    console_write(" Inode: ");
+    print_number(node->inode);
+    console_put_char('\n');
 }
 
 /*
