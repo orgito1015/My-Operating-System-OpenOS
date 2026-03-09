@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OpenOS — an open-source research operating system built from scratch for x86." />
+  <title>OpenOS — Advanced Research Kernel</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- ── Hero / Header ── -->
+  <header>
+    <div class="hero-badge">Open Source · x86 · Research OS</div>
+    <h1><span>Open</span>OS</h1>
+    <p class="tagline">
+      A modular, research-oriented operating system built from scratch for the
+      x86 architecture — featuring memory management, exception handling, and
+      a built-in shell.
+    </p>
+    <nav class="hero-actions" aria-label="Primary">
+      <a class="btn btn-primary"
+         href="https://github.com/orgito1015/My-Operating-System-OpenOS">
+        View on GitHub
+      </a>
+      <a class="btn btn-secondary"
+         href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/kernel">
+        Source Code
+      </a>
+      <a class="btn btn-secondary"
+         href="https://github.com/orgito1015/My-Operating-System-OpenOS/blob/main/CONTRIBUTING.md">
+        Contributing
+      </a>
+    </nav>
+  </header>
+
+  <!-- ── Main Content ── -->
+  <main id="main-content">
+
+    <!-- Status -->
+    <section aria-labelledby="status-heading">
+      <h2 id="status-heading">Project Status</h2>
+      <span class="status">Phase&nbsp;0 — Core Foundation complete</span>
+    </section>
+
+    <!-- Feature highlights -->
+    <section aria-labelledby="features-heading">
+      <h2 id="features-heading">Key Features</h2>
+      <div class="card-grid">
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🧱</div>
+          <h3>Modular Monolithic Kernel</h3>
+          <p>Clean separation between arch, kernel, memory, drivers, and filesystem layers.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">⚡</div>
+          <h3>Exception Handling</h3>
+          <p>All 32 x86 CPU exceptions handled with detailed crash reports and register dumps.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🧠</div>
+          <h3>Memory Management</h3>
+          <p>Bitmap-based physical memory manager and two-level virtual memory paging.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">⌨️</div>
+          <h3>Built-in Shell</h3>
+          <p>Interactive shell with <code>ls</code>, <code>cat</code>, <code>stat</code>, <code>echo</code>, and more.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🔬</div>
+          <h3>CPU Simulator</h3>
+          <p>5-stage pipelined CPU, single-cycle reference model, cache, and bus simulator.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🚀</div>
+          <h3>QEMU &amp; VirtualBox</h3>
+          <p>Run directly in QEMU or boot a full ISO in VirtualBox with one command.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Repository sections -->
+    <section aria-labelledby="repo-heading">
+      <h2 id="repo-heading">Repository Sections</h2>
+      <ul class="link-list">
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/kernel">
+            kernel/ — Core kernel initialization and panic handling
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/arch">
+            arch/ — x86 architecture code (IDT, ISR, PIC, exceptions)
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/memory">
+            memory/ — Physical and virtual memory managers
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/drivers">
+            drivers/ — Console (VGA), keyboard (PS/2), timer (PIT)
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/tree/main/docs">
+            docs/ — Architecture docs, roadmap, and learning materials
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/blob/main/Makefile">
+            Makefile — Build, run, ISO, benchmark, debug targets
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/blob/main/CONTRIBUTING.md">
+            CONTRIBUTING.md — How to contribute
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Quick start -->
+    <section aria-labelledby="quickstart-heading">
+      <h2 id="quickstart-heading">Quick Start</h2>
+      <ul class="link-list">
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS#-quick-start">
+            Build &amp; run in QEMU (<code>make run</code>)
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS#build-bootable-iso">
+            Build a bootable ISO (<code>make iso</code>)
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/orgito1015/My-Operating-System-OpenOS#-build--run">
+            Prerequisites &amp; installation instructions
+          </a>
+        </li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>
+      Hosted on
+      <a href="https://pages.github.com/" rel="noopener noreferrer">GitHub Pages</a>
+      ·
+      <a href="https://github.com/orgito1015/My-Operating-System-OpenOS" rel="noopener noreferrer">
+        github.com/orgito1015/My-Operating-System-OpenOS
+      </a>
+      ·
+      <a href="https://github.com/orgito1015/My-Operating-System-OpenOS/blob/main/LICENSE" rel="noopener noreferrer">
+        MIT License
+      </a>
+    </p>
+  </footer>
+
+</body>
+</html>

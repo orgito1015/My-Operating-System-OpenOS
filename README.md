@@ -430,6 +430,43 @@ To remove build artifacts:
 make clean
 ```
 
+## 🌐 GitHub Pages Website
+
+The project website is hosted on **GitHub Pages** and lives in the `docs/` directory of this repository.
+
+### Live URL
+
+```
+https://orgito1015.github.io/My-Operating-System-OpenOS/
+```
+
+### Enable GitHub Pages (repository owner)
+
+1. Go to **Settings → Pages** in this repository.
+2. Under **Build and deployment**, set:
+   - **Source**: `Deploy from a branch`
+   - **Branch**: `main`
+   - **Folder**: `/docs`
+3. Click **Save**.
+
+GitHub will publish the site within a minute or two. The URL above will go live once Pages is enabled.
+
+### Repository layout
+
+| Path | Purpose |
+|------|---------|
+| `docs/index.html` | GitHub Pages landing page |
+| `docs/404.html` | Custom 404 page |
+| `docs/assets/style.css` | Website stylesheet |
+| `docs/architecture/` | Architecture documentation (Markdown) |
+| `docs/roadmap/` | Roadmap documentation (Markdown) |
+| `kernel/`, `arch/`, `memory/`, `drivers/` | OS source code |
+| `Makefile` | Build system |
+
+> **Note:** The `docs/` folder serves dual purpose — it hosts the GitHub Pages website (`index.html`, `404.html`, `assets/`) **and** the project's Markdown documentation (subdirectories like `architecture/`, `roadmap/`, etc.). OS source code lives outside `docs/` in directories such as `kernel/`, `arch/`, `memory/`, and `drivers/`.
+
+---
+
 ##  Contributing
 
 OpenOS welcomes contributions at all levels! Whether you're fixing a bug, adding a feature, improving documentation, or just learning, your contributions are valuable.

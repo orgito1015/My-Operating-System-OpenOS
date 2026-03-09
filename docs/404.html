@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Page not found — OpenOS" />
+  <title>404 — Page Not Found | OpenOS</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    /* Extra centering for the 404 hero */
+    .not-found-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .error-code {
+      font-size: clamp(5rem, 18vw, 10rem);
+      font-weight: 900;
+      color: var(--color-border);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .not-found-wrapper h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 0.75rem;
+    }
+    .not-found-wrapper p {
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header>
+    <div class="hero-badge">Open Source · x86 · Research OS</div>
+    <h1><span>Open</span>OS</h1>
+  </header>
+
+  <main id="main-content" class="not-found-wrapper">
+    <div class="error-code" aria-hidden="true">404</div>
+    <h1>Page not found</h1>
+    <p>The page you were looking for doesn't exist or may have been moved.</p>
+    <a class="btn btn-primary" href="./">← Back to Home</a>
+  </main>
+
+  <footer>
+    <p>
+      Hosted on
+      <a href="https://pages.github.com/" rel="noopener noreferrer">GitHub Pages</a>
+      ·
+      <a href="https://github.com/orgito1015/My-Operating-System-OpenOS" rel="noopener noreferrer">
+        github.com/orgito1015/My-Operating-System-OpenOS
+      </a>
+    </p>
+  </footer>
+
+</body>
+</html>
