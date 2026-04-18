@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../fs/vfs.h"
+#include "../include/multiboot.h"
 
 /* GDT segment selectors (GRUB's GDT) */
 #define KERNEL_CODE_SEGMENT 0x10   /* GRUB uses 0x10 for code */
@@ -25,7 +26,7 @@
 extern vfs_node_t* current_directory;
 
 /* Kernel main entry point */
-void kmain(void);
+void kmain(struct multiboot_info *mboot);
 
 /* Current directory functions */
 vfs_node_t* kernel_get_current_directory(void);
