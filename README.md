@@ -201,7 +201,7 @@ From the project root directory:
 make
 ```
 
-This will compile the kernel and produce `Kernel2.0/openos.bin`.
+This will compile the kernel and produce `build/openos.bin`.
 
 ### Running
 

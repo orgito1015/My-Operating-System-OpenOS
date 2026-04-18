@@ -29,6 +29,9 @@ _start:
     /* Set up kernel stack (grows downward from stack_top) */
     mov $stack_top, %esp
 
+    /* Push Multiboot info pointer (passed in ebx by GRUB) */
+    push %ebx
+
     /* Call C kernel entry point */
     call kmain
 

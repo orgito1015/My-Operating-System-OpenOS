@@ -20,8 +20,8 @@
 #include "../include/gui.h"
 #include "../include/network.h"
 #include "../include/script.h"
-/* #include "../memory/pmm.h" */  /* TODO: Uncomment when Multiboot info is passed */
-/* #include "../memory/vmm.h" */  /* TODO: Uncomment when Multiboot info is passed */
+#include "../memory/pmm.h"
+#include "../memory/vmm.h"
 
 /* Current working directory */
 vfs_node_t* current_directory = 0;
@@ -39,7 +39,7 @@ void kernel_set_current_directory(vfs_node_t* dir) {
 }
 
 /* Kernel entry point called from boot.S */
-void kmain(void) {
+void kmain(struct multiboot_info *mboot) {
     /* Initialize console */
     console_init();
     
@@ -78,33 +78,33 @@ void kmain(void) {
     vfs_init();
     current_directory = vfs_get_root();
     
+    /* Initialize physical memory manager */
+    console_write("[7/11] Initializing physical memory manager...\n");
+    pmm_init(mboot);
+
+    /* Initialize virtual memory manager */
+    console_write("[8/11] Initializing virtual memory manager...\n");
+    vmm_init();
+
     /* Initialize IPC mechanisms */
-    console_write("[7/11] Initializing IPC (pipes, message queues)...\n");
+    console_write("[9/13] Initializing IPC (pipes, message queues)...\n");
     ipc_init();
     
     /* Initialize SMP support */
-    console_write("[8/11] Initializing multi-core SMP...\n");
+    console_write("[10/13] Initializing multi-core SMP...\n");
     smp_init();
     
     /* Initialize GUI/Windowing system */
-    console_write("[9/11] Initializing GUI framework...\n");
+    console_write("[11/13] Initializing GUI framework...\n");
     gui_init();
     
     /* Initialize Networking stack */
-    console_write("[10/11] Initializing networking stack...\n");
+    console_write("[12/13] Initializing networking stack...\n");
     net_init();
     
     /* Initialize Shell scripting */
-    console_write("[11/11] Initializing shell scripting...\n");
+    console_write("[13/13] Initializing shell scripting...\n");
     script_init();
-    
-    /* TODO: When Multiboot info is passed to kmain(), uncomment these lines:
-     * console_write("[7/8] Initializing physical memory...\n");
-     * pmm_init(mboot);
-     * 
-     * console_write("[8/8] Initializing virtual memory...\n");
-     * vmm_init();
-     */
     
     /* Enable interrupts */
     __asm__ __volatile__("sti");

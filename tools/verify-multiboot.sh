@@ -6,7 +6,7 @@
 
 set -e
 
-KERNEL_BIN="${1:-Kernel2.0/openos.bin}"
+KERNEL_BIN="${1:-build/openos.bin}"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -213,7 +213,7 @@ else
     echo ""
     echo "Troubleshooting:"
     echo "  1. Rebuild kernel: make clean && make"
-    echo "  2. Check linker script: Kernel2.0/linker.ld"
+    echo "  2. Check linker script: linker.ld"
     echo "  3. Verify boot.S has multiboot header"
     echo "  4. See: docs/MULTIBOOT_FIX.md"
     exit 1

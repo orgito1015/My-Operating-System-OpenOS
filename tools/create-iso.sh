@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Paths
-KERNEL_BIN="Kernel2.0/openos.bin"
+KERNEL_BIN="build/openos.bin"
 ISO_DIR="iso"
 ISO_BOOT_DIR="${ISO_DIR}/boot"
 ISO_GRUB_DIR="${ISO_DIR}/boot/grub"

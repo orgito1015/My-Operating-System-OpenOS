@@ -3,7 +3,7 @@
 
 # Target binary name and output location
 TARGET = openos
-OUTPUT_DIR = Kernel2.0
+OUTPUT_DIR = build
 OUTPUT_BIN = $(OUTPUT_DIR)/$(TARGET).bin
 
 # QEMU settings
@@ -31,6 +31,7 @@ CFLAGS += -I./kernel         # Include kernel headers
 CFLAGS += -I./memory         # Include memory headers
 CFLAGS += -I./drivers        # Include driver headers
 CFLAGS += -I./fs             # Include filesystem headers
+CFLAGS += -I./process        # Include process management headers
 
 # Assembly flags (same as C flags for consistency)
 ASFLAGS = $(CFLAGS)
@@ -48,6 +49,7 @@ KERNEL_DIR = kernel
 MEMORY_DIR = memory
 DRIVERS_DIR = drivers
 FS_DIR = fs
+PROCESS_DIR = process
 
 # Rust driver configuration library
 RUST_CONFIG_DIR = drivers/config
@@ -83,6 +85,7 @@ CPU_OBJS = $(CPU_DIR)/pipeline.o \
 # Memory management object files
 MEMORY_OBJS = $(MEMORY_DIR)/pmm.o \
               $(MEMORY_DIR)/vmm.o \
+              $(MEMORY_DIR)/heap.o \
               $(MEMORY_DIR)/cache.o \
               $(MEMORY_DIR)/bus.o
 
@@ -94,8 +97,11 @@ DRIVERS_OBJS = $(DRIVERS_DIR)/console.o \
 # Filesystem object files
 FS_OBJS = $(FS_DIR)/vfs.o
 
+# Process management object files
+PROCESS_OBJS = $(PROCESS_DIR)/process.o
+
 # All object files
-OBJS = $(ARCH_OBJS) $(KERNEL_OBJS) $(CPU_OBJS) $(MEMORY_OBJS) $(DRIVERS_OBJS) $(FS_OBJS)
+OBJS = $(ARCH_OBJS) $(KERNEL_OBJS) $(CPU_OBJS) $(MEMORY_OBJS) $(DRIVERS_OBJS) $(FS_OBJS) $(PROCESS_OBJS)
 
 # Default target: build the kernel
 all: $(OUTPUT_BIN)
@@ -171,6 +177,9 @@ $(MEMORY_DIR)/pmm.o: $(MEMORY_DIR)/pmm.c $(MEMORY_DIR)/pmm.h
 $(MEMORY_DIR)/vmm.o: $(MEMORY_DIR)/vmm.c $(MEMORY_DIR)/vmm.h $(MEMORY_DIR)/pmm.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(MEMORY_DIR)/heap.o: $(MEMORY_DIR)/heap.c $(MEMORY_DIR)/heap.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(MEMORY_DIR)/cache.o: $(MEMORY_DIR)/cache.c $(MEMORY_DIR)/cache.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -189,6 +198,10 @@ $(DRIVERS_DIR)/timer.o: $(DRIVERS_DIR)/timer.c $(DRIVERS_DIR)/timer.h $(ARCH_DIR
 
 # Filesystem files
 $(FS_DIR)/vfs.o: $(FS_DIR)/vfs.c $(FS_DIR)/vfs.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Process management files
+$(PROCESS_DIR)/process.o: $(PROCESS_DIR)/process.c $(PROCESS_DIR)/process.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Rust driver configuration library (always call cargo; it handles incremental builds)
@@ -287,11 +300,13 @@ run-vbox: iso
 
 # Clean build artifacts
 clean:
-	rm -f $(ARCH_DIR)/*.o $(KERNEL_DIR)/*.o $(CPU_DIR)/*.o $(MEMORY_DIR)/*.o $(DRIVERS_DIR)/*.o
+	rm -f $(ARCH_DIR)/*.o $(KERNEL_DIR)/*.o $(CPU_DIR)/*.o $(MEMORY_DIR)/*.o $(DRIVERS_DIR)/*.o $(FS_DIR)/*.o $(PROCESS_DIR)/*.o
 	rm -f $(OUTPUT_BIN)
+	rm -rf $(OUTPUT_DIR)
 	rm -f $(BENCHMARK_BIN)
 	rm -f openos.iso
 	rm -rf iso
+	rm -rf Kernel2.0
 	cd $(RUST_CONFIG_DIR) && cargo clean
 
 # Show help
