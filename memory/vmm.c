@@ -76,12 +76,40 @@ static struct page_table *get_page_table(struct page_directory *dir, void *virt,
  *       The first 4MB is identity-mapped to cover kernel code/data and VGA buffer.
  */
 void vmm_init(void) {
-    /* Allocate kernel page directory */
+    /*
+     * Allocate the kernel page directory.
+     *
+     * NOTE: struct page_directory is larger than one page (it carries
+     * both the 1024 hardware entries AND 1024 software table pointers),
+     * so a single pmm_alloc_page() is NOT enough — allocating only one
+     * page lets the directory's tables[]/entries[] writes overflow into
+     * the next physical page, corrupting the page tables allocated
+     * immediately afterward. Reserve enough contiguous pages for the
+     * whole structure.
+     *
+     * The CPU only reads the first 4 KB (entries[]), which is page
+     * aligned at the start of the allocation, so CR3 stays valid.
+     */
+    uint32_t dir_pages = (sizeof(struct page_directory) + PAGE_SIZE - 1) / PAGE_SIZE;
+
     void *dir_phys = pmm_alloc_page();
     if (dir_phys == NULL) {
         return;
     }
-    
+    /* Claim the remaining contiguous pages the directory needs. */
+    {
+        void *expect = (void *)((uint32_t)dir_phys + PAGE_SIZE);
+        for (uint32_t i = 1; i < dir_pages; i++) {
+            void *p = pmm_alloc_page();
+            if (p != expect) {
+                /* PMM could not give us a contiguous run; cannot proceed
+                 * safely, so leave paging disabled rather than corrupt RAM. */
+                return;
+            }
+            expect = (void *)((uint32_t)p + PAGE_SIZE);
+        }
+    }
+
     kernel_directory = (struct page_directory *)dir_phys;
     
     /* Clear page directory */
@@ -103,9 +131,20 @@ void vmm_init(void) {
      * A minimum of 4 MB is always mapped so kernel code/data and the
      * VGA buffer are covered even if the memory map reports less.
      */
+    /*
+     * Identity-map physical RAM so the PMM's allocations are reachable
+     * once paging is on. We map all detected RAM, but cap the initial
+     * map at 64 MiB: that comfortably covers kernel code/data, the early
+     * page tables, and the 4 MiB kernel heap, while keeping the number
+     * of page tables allocated here bounded and contiguous-friendly.
+     * Higher regions can be mapped on demand later if needed.
+     */
     uint32_t ram_end = pmm_get_max_address();
     if (ram_end < 0x400000) {
-        ram_end = 0x400000;
+        ram_end = 0x400000;          /* floor: 4 MiB  */
+    }
+    if (ram_end > 0x4000000) {
+        ram_end = 0x4000000;         /* cap: 64 MiB   */
     }
     vmm_identity_map_region(kernel_directory, 0, ram_end,
                            PTE_PRESENT | PTE_WRITABLE);
@@ -121,12 +160,27 @@ void vmm_init(void) {
  * Create a new page directory
  */
 struct page_directory *vmm_create_directory(void) {
-    /* Allocate physical page for directory */
+    /* Same sizing requirement as vmm_init: the directory spans multiple
+     * pages, so reserve a contiguous run rather than a single page. */
+    uint32_t dir_pages = (sizeof(struct page_directory) + PAGE_SIZE - 1) / PAGE_SIZE;
+
     void *dir_phys = pmm_alloc_page();
     if (dir_phys == NULL) {
         return NULL;
     }
-    
+    {
+        void *expect = (void *)((uint32_t)dir_phys + PAGE_SIZE);
+        for (uint32_t i = 1; i < dir_pages; i++) {
+            void *p = pmm_alloc_page();
+            if (p != expect) {
+                /* Roll back is not tracked here; fail safe by returning NULL.
+                 * Caller must handle allocation failure. */
+                return NULL;
+            }
+            expect = (void *)((uint32_t)p + PAGE_SIZE);
+        }
+    }
+
     struct page_directory *dir = (struct page_directory *)dir_phys;
     
     /* Clear page directory */
