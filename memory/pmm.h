@@ -47,4 +47,10 @@ void pmm_get_stats(struct pmm_stats *stats);
 /* Check if a page is free */
 bool pmm_is_page_free(void *page);
 
+/* Total number of physical pages known to the allocator */
+uint32_t pmm_get_total_pages(void);
+
+/* Highest physical address (exclusive) backed by RAM, in bytes */
+uint32_t pmm_get_max_address(void);
+
 #endif /* OPENOS_MEMORY_PMM_H */
