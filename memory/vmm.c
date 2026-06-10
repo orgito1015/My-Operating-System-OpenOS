@@ -90,8 +90,24 @@ void vmm_init(void) {
         kernel_directory->tables[i] = NULL;
     }
     
-    /* Identity map first 4MB (covers kernel and VGA) */
-    vmm_identity_map_region(kernel_directory, 0, 0x400000, 
+    /*
+     * Identity-map ALL physical RAM, not just the first 4 MB.
+     *
+     * The PMM hands out free pages from anywhere in physical memory
+     * (typically well above 4 MB on a normal boot). If only the first
+     * 4 MB were mapped, the first allocation above that boundary would
+     * fault the moment paging is active. Mapping the full RAM range up
+     * front keeps virt == phys for every page the PMM can return,
+     * including the page tables allocated below.
+     *
+     * A minimum of 4 MB is always mapped so kernel code/data and the
+     * VGA buffer are covered even if the memory map reports less.
+     */
+    uint32_t ram_end = pmm_get_max_address();
+    if (ram_end < 0x400000) {
+        ram_end = 0x400000;
+    }
+    vmm_identity_map_region(kernel_directory, 0, ram_end,
                            PTE_PRESENT | PTE_WRITABLE);
     
     /* Set as current directory */
