@@ -197,3 +197,23 @@ void pmm_get_stats(struct pmm_stats *stats) {
     stats->used_memory_kb = (used_pages * PMM_PAGE_SIZE) / 1024;
     stats->free_memory_kb = stats->total_memory_kb - stats->used_memory_kb;
 }
+
+/*
+ * Return the total number of physical pages known to the allocator.
+ * Valid only after pmm_init() has run.
+ */
+uint32_t pmm_get_total_pages(void) {
+    return total_pages;
+}
+
+/*
+ * Return the highest physical address (exclusive) backed by RAM, in bytes.
+ * Clamped to the range the bitmap can actually track.
+ */
+uint32_t pmm_get_max_address(void) {
+    uint64_t max_bytes = (uint64_t)total_pages * PMM_PAGE_SIZE;
+    if (max_physical_address < max_bytes) {
+        return (uint32_t)max_physical_address;
+    }
+    return (uint32_t)max_bytes;
+}
