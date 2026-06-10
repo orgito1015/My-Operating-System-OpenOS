@@ -22,6 +22,7 @@
 #include "../include/script.h"
 #include "../memory/pmm.h"
 #include "../memory/vmm.h"
+#include "../memory/heap.h"
 
 /* Current working directory */
 vfs_node_t* current_directory = 0;
@@ -85,6 +86,36 @@ void kmain(struct multiboot_info *mboot) {
     /* Initialize virtual memory manager */
     console_write("[8/11] Initializing virtual memory manager...\n");
     vmm_init();
+
+    /*
+     * Initialize the kernel heap on a PMM-backed region.
+     *
+     * Reserve a contiguous run of physical pages while paging still maps
+     * all RAM identity (virt == phys), so the heap base is valid as a
+     * pointer. 1024 pages = 4 MiB of dynamic kernel memory.
+     */
+    {
+        #define HEAP_PAGES 1024u
+        void *heap_start = pmm_alloc_page();
+        void *heap_prev  = heap_start;
+        uint32_t got = (heap_start != 0) ? 1u : 0u;
+        while (got < HEAP_PAGES) {
+            void *p = pmm_alloc_page();
+            /* Require physically contiguous pages for a flat arena. */
+            if (p == 0 || (uint32_t)p != (uint32_t)heap_prev + 0x1000u) {
+                if (p != 0) {
+                    pmm_free_page(p);
+                }
+                break;
+            }
+            heap_prev = p;
+            got++;
+        }
+        if (heap_start != 0 && got > 0u) {
+            heap_init(heap_start, (size_t)got * 0x1000u);
+        }
+        #undef HEAP_PAGES
+    }
 
     /* Initialize IPC mechanisms */
     console_write("[9/13] Initializing IPC (pipes, message queues)...\n");
