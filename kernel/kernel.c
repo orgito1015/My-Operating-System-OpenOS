@@ -49,42 +49,42 @@ void kmain(struct multiboot_info *mboot) {
     console_write("Running in 32-bit protected mode.\n\n");
 
     /* Initialize IDT */
-    console_write("[1/11] Initializing IDT...\n");
+    console_write("[1/13] Initializing IDT...\n");
     idt_init();
     
     /* Install exception handlers */
-    console_write("[2/11] Installing exception handlers...\n");
+    console_write("[2/13] Installing exception handlers...\n");
     exceptions_init();
     
     /* Initialize PIC */
-    console_write("[3/11] Initializing PIC...\n");
+    console_write("[3/13] Initializing PIC...\n");
     pic_init();
     
     /* Initialize timer (100 Hz) */
-    console_write("[4/11] Initializing timer...\n");
+    console_write("[4/13] Initializing timer...\n");
     timer_init(100);
     
     /* Install timer interrupt handler (IRQ0 = interrupt 0x20) */
     idt_set_gate(0x20, (uint32_t)irq0_handler, KERNEL_CODE_SEGMENT, IDT_FLAGS_KERNEL);
     
     /* Install keyboard interrupt handler (IRQ1 = interrupt 0x21) */
-    console_write("[5/11] Initializing keyboard...\n");
+    console_write("[5/13] Initializing keyboard...\n");
     idt_set_gate(0x21, (uint32_t)irq1_handler, KERNEL_CODE_SEGMENT, IDT_FLAGS_KERNEL);
     
     /* Initialize keyboard (this will unmask IRQ1) */
     keyboard_init();
     
     /* Initialize VFS */
-    console_write("[6/11] Initializing filesystem...\n");
+    console_write("[6/13] Initializing filesystem...\n");
     vfs_init();
     current_directory = vfs_get_root();
     
     /* Initialize physical memory manager */
-    console_write("[7/11] Initializing physical memory manager...\n");
+    console_write("[7/13] Initializing physical memory manager...\n");
     pmm_init(mboot);
 
     /* Initialize virtual memory manager */
-    console_write("[8/11] Initializing virtual memory manager...\n");
+    console_write("[8/13] Initializing virtual memory manager...\n");
     vmm_init();
 
     /*

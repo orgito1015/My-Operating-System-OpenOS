@@ -132,3 +132,26 @@ void kfree(void *ptr) {
         block_coalesce(blk->prev);
     }
 }
+
+/*
+ * Report heap usage by walking the block list. Any of the out-pointers
+ * may be NULL. Sizes are payload bytes (header overhead excluded).
+ */
+void heap_get_stats(size_t *total_payload, size_t *used_payload,
+                    size_t *free_payload, uint32_t *block_count) {
+    size_t total = 0, used = 0, freeb = 0;
+    uint32_t blocks = 0;
+    for (block_header_t *b = heap_head; b != NULL; b = b->next) {
+        total += b->size;
+        if (b->free) {
+            freeb += b->size;
+        } else {
+            used += b->size;
+        }
+        blocks++;
+    }
+    if (total_payload) *total_payload = total;
+    if (used_payload)  *used_payload  = used;
+    if (free_payload)  *free_payload  = freeb;
+    if (block_count)   *block_count   = blocks;
+}

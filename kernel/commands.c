@@ -10,6 +10,8 @@
 #include "../drivers/timer.h"
 #include "../arch/x86/ports.h"
 #include "../fs/vfs.h"
+#include "../memory/pmm.h"
+#include "../memory/heap.h"
 #include "../include/ipc.h"
 #include "../include/smp.h"
 #include "../include/gui.h"
@@ -70,6 +72,11 @@ void commands_register_all(void) {
     shell_register_command("cd", "Change directory", cmd_cd);
     shell_register_command("cat", "Display file contents [-n] [file...]", cmd_cat);
     shell_register_command("stat", "Show file or directory metadata", cmd_stat);
+    shell_register_command("mkdir", "Create a directory", cmd_mkdir);
+    shell_register_command("touch", "Create an empty file", cmd_touch);
+    shell_register_command("write", "Write text to a file [write <file> <text...>]", cmd_write);
+    shell_register_command("rm", "Remove a file or directory", cmd_rm);
+    shell_register_command("meminfo", "Show physical and heap memory usage", cmd_meminfo);
     shell_register_command("reboot", "Reboot the system", cmd_reboot);
     
     /* New feature test commands */
@@ -682,6 +689,301 @@ void cmd_stat(int argc, char** argv) {
     console_write(" Inode: ");
     print_number(node->inode);
     console_put_char('\n');
+}
+
+/*
+ * Helper: split a path into its parent directory node and the final
+ * component ("leaf"). For a bare name (no '/'), the parent is the current
+ * working directory. Returns the parent directory node, or NULL if the
+ * parent path does not resolve to a directory. On success, leaf_out holds
+ * the final path component.
+ */
+static vfs_node_t* resolve_parent_and_leaf(const char* path, char* leaf_out, size_t leaf_size) {
+    /* Find the last '/' to separate parent path from leaf name. */
+    int last_slash = -1;
+    int len = (int)string_length(path);
+    for (int i = 0; i < len; i++) {
+        if (path[i] == '/') {
+            last_slash = i;
+        }
+    }
+
+    if (last_slash < 0) {
+        /* No slash: leaf is the whole string, parent is current directory. */
+        size_t i = 0;
+        for (; path[i] != '\0' && i < leaf_size - 1; i++) {
+            leaf_out[i] = path[i];
+        }
+        leaf_out[i] = '\0';
+        return kernel_get_current_directory();
+    }
+
+    /* Copy the leaf (portion after the last slash). */
+    {
+        const char* leaf_src = path + last_slash + 1;
+        size_t i = 0;
+        for (; leaf_src[i] != '\0' && i < leaf_size - 1; i++) {
+            leaf_out[i] = leaf_src[i];
+        }
+        leaf_out[i] = '\0';
+    }
+
+    /* Resolve the parent path. */
+    vfs_node_t* parent;
+    if (last_slash == 0) {
+        /* Path like "/foo": parent is root. */
+        parent = vfs_get_root();
+    } else {
+        char parent_path[VFS_MAX_PATH_LENGTH];
+        int i = 0;
+        for (; i < last_slash && i < (int)sizeof(parent_path) - 1; i++) {
+            parent_path[i] = path[i];
+        }
+        parent_path[i] = '\0';
+
+        if (parent_path[0] == '/') {
+            parent = vfs_resolve_path(parent_path);
+        } else {
+            char abs_path[VFS_MAX_PATH_LENGTH];
+            build_absolute_path(parent_path, abs_path, VFS_MAX_PATH_LENGTH);
+            parent = vfs_resolve_path(abs_path);
+        }
+    }
+
+    if (!parent || parent->type != NODE_DIRECTORY) {
+        return NULL;
+    }
+    return parent;
+}
+
+/*
+ * MEMINFO command - Report physical (PMM) and heap memory usage.
+ * Usage: meminfo
+ */
+void cmd_meminfo(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
+
+    struct pmm_stats pmm;
+    pmm_get_stats(&pmm);
+
+    console_write("Physical memory (PMM, 4 KiB pages)\n");
+    console_write("  total : ");
+    print_number(pmm.total_pages);
+    console_write(" pages (");
+    print_number(pmm.total_memory_kb);
+    console_write(" KiB)\n");
+    console_write("  used  : ");
+    print_number(pmm.used_pages);
+    console_write(" pages (");
+    print_number(pmm.used_memory_kb);
+    console_write(" KiB)\n");
+    console_write("  free  : ");
+    print_number(pmm.free_pages);
+    console_write(" pages (");
+    print_number(pmm.free_memory_kb);
+    console_write(" KiB)\n");
+
+    size_t h_total = 0, h_used = 0, h_free = 0;
+    uint32_t h_blocks = 0;
+    heap_get_stats(&h_total, &h_used, &h_free, &h_blocks);
+
+    console_write("Kernel heap (first-fit free list)\n");
+    console_write("  total : ");
+    print_number((uint32_t)h_total);
+    console_write(" bytes\n");
+    console_write("  used  : ");
+    print_number((uint32_t)h_used);
+    console_write(" bytes\n");
+    console_write("  free  : ");
+    print_number((uint32_t)h_free);
+    console_write(" bytes across ");
+    print_number(h_blocks);
+    console_write(" block(s)\n");
+}
+
+/*
+ * MKDIR command - Create a new directory.
+ * Usage: mkdir <name>
+ */
+void cmd_mkdir(int argc, char** argv) {
+    if (argc < 2) {
+        console_write("Usage: mkdir <name>\n");
+        return;
+    }
+
+    for (int a = 1; a < argc; a++) {
+        char leaf[VFS_NAME_LENGTH];
+        vfs_node_t* parent = resolve_parent_and_leaf(argv[a], leaf, sizeof(leaf));
+        if (!parent) {
+            console_write("mkdir: ");
+            console_write(argv[a]);
+            console_write(": No such file or directory\n");
+            continue;
+        }
+        if (leaf[0] == '\0') {
+            console_write("mkdir: invalid directory name\n");
+            continue;
+        }
+        if (vfs_find_node(parent, leaf) != NULL) {
+            console_write("mkdir: ");
+            console_write(argv[a]);
+            console_write(": File exists\n");
+            continue;
+        }
+
+        vfs_node_t* dir = vfs_create_node(leaf, NODE_DIRECTORY);
+        if (!dir) {
+            console_write("mkdir: cannot create directory (out of nodes)\n");
+            continue;
+        }
+        if (vfs_add_child(parent, dir) != 0) {
+            console_write("mkdir: cannot create directory (parent full)\n");
+        }
+    }
+}
+
+/*
+ * TOUCH command - Create an empty file if it does not already exist.
+ * Usage: touch <name>
+ */
+void cmd_touch(int argc, char** argv) {
+    if (argc < 2) {
+        console_write("Usage: touch <name>\n");
+        return;
+    }
+
+    for (int a = 1; a < argc; a++) {
+        char leaf[VFS_NAME_LENGTH];
+        vfs_node_t* parent = resolve_parent_and_leaf(argv[a], leaf, sizeof(leaf));
+        if (!parent) {
+            console_write("touch: ");
+            console_write(argv[a]);
+            console_write(": No such file or directory\n");
+            continue;
+        }
+        if (leaf[0] == '\0') {
+            console_write("touch: invalid file name\n");
+            continue;
+        }
+        /* Existing node: nothing to do (matches touch semantics loosely). */
+        if (vfs_find_node(parent, leaf) != NULL) {
+            continue;
+        }
+
+        vfs_node_t* file = vfs_create_node(leaf, NODE_FILE);
+        if (!file) {
+            console_write("touch: cannot create file (out of nodes)\n");
+            continue;
+        }
+        if (vfs_add_child(parent, file) != 0) {
+            console_write("touch: cannot create file (directory full)\n");
+        }
+    }
+}
+
+/*
+ * WRITE command - Write text to a file, creating it if needed.
+ * Usage: write <file> <text...>
+ * The text is everything after the filename, space-joined, plus a newline.
+ */
+void cmd_write(int argc, char** argv) {
+    if (argc < 3) {
+        console_write("Usage: write <file> <text...>\n");
+        return;
+    }
+
+    char leaf[VFS_NAME_LENGTH];
+    vfs_node_t* parent = resolve_parent_and_leaf(argv[1], leaf, sizeof(leaf));
+    if (!parent) {
+        console_write("write: ");
+        console_write(argv[1]);
+        console_write(": No such file or directory\n");
+        return;
+    }
+    if (leaf[0] == '\0') {
+        console_write("write: invalid file name\n");
+        return;
+    }
+
+    vfs_node_t* file = vfs_find_node(parent, leaf);
+    if (file && file->type != NODE_FILE) {
+        console_write("write: ");
+        console_write(argv[1]);
+        console_write(": Is a directory\n");
+        return;
+    }
+    if (!file) {
+        file = vfs_create_node(leaf, NODE_FILE);
+        if (!file || vfs_add_child(parent, file) != 0) {
+            console_write("write: cannot create file\n");
+            return;
+        }
+    }
+
+    /* Assemble the payload from argv[2..] into a static buffer. */
+    static uint8_t buffer[VFS_MAX_FILE_SIZE];
+    uint32_t pos = 0;
+    for (int i = 2; i < argc && pos < VFS_MAX_FILE_SIZE; i++) {
+        if (i > 2 && pos < VFS_MAX_FILE_SIZE) {
+            buffer[pos++] = ' ';
+        }
+        const char* w = argv[i];
+        for (uint32_t j = 0; w[j] != '\0' && pos < VFS_MAX_FILE_SIZE; j++) {
+            buffer[pos++] = (uint8_t)w[j];
+        }
+    }
+    if (pos < VFS_MAX_FILE_SIZE) {
+        buffer[pos++] = '\n';
+    }
+
+    ssize_t written = vfs_write(file, 0, pos, buffer);
+    if (written < 0) {
+        console_write("write: error writing file\n");
+        return;
+    }
+    /* Truncate the logical length to what we just wrote. */
+    file->length = (uint32_t)written;
+}
+
+/*
+ * RM command - Remove a file or (empty or non-empty) directory entry.
+ * Usage: rm <name>
+ */
+void cmd_rm(int argc, char** argv) {
+    if (argc < 2) {
+        console_write("Usage: rm <name>\n");
+        return;
+    }
+
+    for (int a = 1; a < argc; a++) {
+        char leaf[VFS_NAME_LENGTH];
+        vfs_node_t* parent = resolve_parent_and_leaf(argv[a], leaf, sizeof(leaf));
+        if (!parent) {
+            console_write("rm: ");
+            console_write(argv[a]);
+            console_write(": No such file or directory\n");
+            continue;
+        }
+        if (leaf[0] == '\0' || string_compare(leaf, ".") == 0 ||
+            string_compare(leaf, "..") == 0) {
+            console_write("rm: refusing to remove '");
+            console_write(argv[a]);
+            console_write("'\n");
+            continue;
+        }
+        if (vfs_find_node(parent, leaf) == NULL) {
+            console_write("rm: ");
+            console_write(argv[a]);
+            console_write(": No such file or directory\n");
+            continue;
+        }
+        if (vfs_remove_child(parent, leaf) != 0) {
+            console_write("rm: ");
+            console_write(argv[a]);
+            console_write(": failed to remove\n");
+        }
+    }
 }
 
 /*

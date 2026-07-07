@@ -14,6 +14,11 @@ SECTIONS
    */
   . = 1M;
 
+  /* Physical start of the kernel image. The PMM uses this (together with
+   * kernel_end below) to reserve the kernel's own page frames so the
+   * allocator never hands out memory the running kernel occupies. */
+  kernel_start = .;
+
   /* Multiboot header must be in the first 8 KiB of the kernel
    * This section contains the Multiboot magic, flags, and checksum
    * It MUST be placed at the very start before all other sections
@@ -51,6 +56,11 @@ SECTIONS
     *(.bss*)
     *(COMMON)
   }
+
+  /* Physical end of the kernel image (exclusive). Everything in
+   * [kernel_start, kernel_end) is the loaded kernel and must be
+   * reserved by the physical memory manager. */
+  kernel_end = .;
 
   /* Discard unnecessary sections */
   /DISCARD/ :

@@ -243,6 +243,11 @@ OpenOS includes a built-in shell with the following commands:
 | `cd <path>` | Change current directory |
 | `cat [-n] [-h] file [file...]` | Display file contents |
 | `stat [-h] path` | Show file or directory metadata |
+| `mkdir <name>...` | Create one or more directories |
+| `touch <name>...` | Create empty file(s) |
+| `write <file> <text...>` | Write text to a file (creates it if needed) |
+| `rm <name>...` | Remove file(s) or directory entries |
+| `meminfo` | Show physical (PMM) and kernel heap memory usage |
 | `reboot` | Reboot the system |
 
 ### `ls` — List Directory Contents

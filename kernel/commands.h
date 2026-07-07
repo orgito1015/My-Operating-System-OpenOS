@@ -21,6 +21,11 @@ void cmd_ls(int argc, char** argv);
 void cmd_cd(int argc, char** argv);
 void cmd_cat(int argc, char** argv);
 void cmd_stat(int argc, char** argv);
+void cmd_mkdir(int argc, char** argv);
+void cmd_touch(int argc, char** argv);
+void cmd_write(int argc, char** argv);
+void cmd_rm(int argc, char** argv);
+void cmd_meminfo(int argc, char** argv);
 void cmd_reboot(int argc, char** argv);
 
 /* New feature test commands */

@@ -9,6 +9,7 @@
 #define OPENOS_MEMORY_HEAP_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /* Initialize the kernel heap */
 void heap_init(void *start, size_t size);
@@ -21,5 +22,10 @@ void *kmalloc_aligned(size_t size, size_t alignment);
 
 /* Free memory allocated from kernel heap */
 void kfree(void *ptr);
+
+
+/* Report heap usage (payload bytes). Any out-pointer may be NULL. */
+void heap_get_stats(size_t *total_payload, size_t *used_payload,
+                    size_t *free_payload, uint32_t *block_count);
 
 #endif /* OPENOS_MEMORY_HEAP_H */

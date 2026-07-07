@@ -56,6 +56,28 @@ RUST_CONFIG_DIR = drivers/config
 RUST_CONFIG_TARGET = i686-unknown-linux-musl
 RUST_CONFIG_LIB = $(RUST_CONFIG_DIR)/target/$(RUST_CONFIG_TARGET)/release/libdriver_config.a
 
+# The Rust driver-config library is an optional, self-contained component:
+# it compiles into the kernel image but no C code references its symbols,
+# so the kernel builds and boots identically with or without it. Building it
+# requires cargo AND the i686 cross target (rustup target add i686-unknown-linux-musl).
+# If either is missing we skip it gracefully so `make` still produces a kernel.
+HAVE_CARGO := $(shell command -v cargo 2> /dev/null)
+ifeq ($(HAVE_CARGO),)
+  RUST_ENABLED :=
+else
+  RUST_ENABLED := $(shell rustc --print target-list 2>/dev/null | grep -qx $(RUST_CONFIG_TARGET) \
+                   && ls $(shell rustc --print sysroot 2>/dev/null)/lib/rustlib/$(RUST_CONFIG_TARGET) >/dev/null 2>&1 \
+                   && echo 1)
+endif
+
+ifeq ($(RUST_ENABLED),1)
+  RUST_LIB_DEP := $(RUST_CONFIG_LIB)
+  RUST_LIB_LINK := $(RUST_CONFIG_LIB)
+else
+  RUST_LIB_DEP :=
+  RUST_LIB_LINK :=
+endif
+
 # Architecture-specific object files
 ARCH_OBJS = $(ARCH_DIR)/boot.o \
             $(ARCH_DIR)/idt.o \
@@ -91,6 +113,7 @@ MEMORY_OBJS = $(MEMORY_DIR)/pmm.o \
 
 # Driver object files
 DRIVERS_OBJS = $(DRIVERS_DIR)/console.o \
+               $(DRIVERS_DIR)/serial.o \
                $(DRIVERS_DIR)/keyboard.o \
                $(DRIVERS_DIR)/timer.o
 
@@ -187,7 +210,10 @@ $(MEMORY_DIR)/bus.o: $(MEMORY_DIR)/bus.c $(MEMORY_DIR)/bus.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Driver files
-$(DRIVERS_DIR)/console.o: $(DRIVERS_DIR)/console.c $(DRIVERS_DIR)/console.h
+$(DRIVERS_DIR)/console.o: $(DRIVERS_DIR)/console.c $(DRIVERS_DIR)/console.h $(DRIVERS_DIR)/serial.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(DRIVERS_DIR)/serial.o: $(DRIVERS_DIR)/serial.c $(DRIVERS_DIR)/serial.h $(ARCH_DIR)/ports.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(DRIVERS_DIR)/keyboard.o: $(DRIVERS_DIR)/keyboard.c $(DRIVERS_DIR)/keyboard.h $(ARCH_DIR)/pic.h $(ARCH_DIR)/ports.h
@@ -212,8 +238,13 @@ rust-config:
 $(RUST_CONFIG_LIB): rust-config
 
 # Link all objects into final kernel binary
-$(OUTPUT_BIN): $(OUTPUT_DIR) $(OBJS) $(RUST_CONFIG_LIB) linker.ld
-	$(CC) -T linker.ld -o $@ -m32 $(LDFLAGS) $(OBJS) $(RUST_CONFIG_LIB)
+$(OUTPUT_BIN): $(OUTPUT_DIR) $(OBJS) $(RUST_LIB_DEP) linker.ld
+ifeq ($(RUST_ENABLED),1)
+	@echo "Linking kernel (with Rust driver_config library)..."
+else
+	@echo "Linking kernel (Rust driver_config skipped: cargo or i686 target unavailable)..."
+endif
+	$(CC) -T linker.ld -o $@ -m32 $(LDFLAGS) $(OBJS) $(RUST_LIB_LINK)
 
 # Benchmark executable (hosted application with standard library)
 BENCHMARK_DIR = benchmarks
@@ -307,7 +338,7 @@ clean:
 	rm -f openos.iso
 	rm -rf iso
 	rm -rf Kernel2.0
-	cd $(RUST_CONFIG_DIR) && cargo clean
+	@if command -v cargo >/dev/null 2>&1; then cd $(RUST_CONFIG_DIR) && cargo clean; fi
 
 # Show help
 help:

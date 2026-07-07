@@ -5,6 +5,7 @@
  */
 
 #include "console.h"
+#include "serial.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -37,6 +38,9 @@ static void terminal_scroll(void) {
 
 /* Initialize console */
 void console_init(void) {
+    /* Bring up COM1 so all console output is mirrored to the serial port
+     * (harmless no-op if no UART is present). */
+    serial_init();
     console_clear();
 }
 
@@ -64,6 +68,13 @@ void console_backspace(void) {
 
 /* Put a character on the console */
 void console_put_char(char c) {
+    /* Mirror every character to the serial port for headless logging,
+     * expanding '\n' to CR/LF so terminals render lines correctly. */
+    if (c == '\n') {
+        serial_write_char('\r');
+    }
+    serial_write_char(c);
+
     if (c == '\n') {
         term_col = 0;
         term_row++;

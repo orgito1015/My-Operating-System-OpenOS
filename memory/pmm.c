@@ -6,6 +6,15 @@
 #include "pmm.h"
 #include <stdint.h>
 
+/*
+ * Kernel image boundaries, provided by the linker script (linker.ld).
+ * These are addresses, not variables; only their &-address is meaningful.
+ * The range [kernel_start, kernel_end) is the physical memory occupied by
+ * the loaded kernel and must never be handed out by the allocator.
+ */
+extern uint8_t kernel_start[];
+extern uint8_t kernel_end[];
+
 /* Bitmap to track page frame usage (1 bit per page) */
 static uint8_t pmm_bitmap[PMM_BITMAP_SIZE];
 
@@ -53,6 +62,24 @@ static inline bool bitmap_test(uint32_t page) {
 }
 
 /*
+ * Reserve a physical address range [start, end) by marking every page it
+ * touches as used. Partially covered pages at either boundary are reserved
+ * in full (rounded out) so the caller's range is never handed out.
+ */
+static void reserve_range(uint64_t start, uint64_t end) {
+    if (end <= start) {
+        return;
+    }
+    uint32_t first = (uint32_t)(start / PMM_PAGE_SIZE);
+    uint32_t last  = (uint32_t)((end + PMM_PAGE_SIZE - 1) / PMM_PAGE_SIZE); /* exclusive */
+    for (uint32_t page = first; page < last && page < total_pages; page++) {
+        if (!bitmap_test(page)) {
+            bitmap_set(page);
+        }
+    }
+}
+
+/*
  * Initialize the physical memory manager
  */
 void pmm_init(struct multiboot_info *mboot) {
@@ -73,8 +100,20 @@ void pmm_init(struct multiboot_info *mboot) {
         for (uint32_t i = start_page; i < total_pages; i++) {
             bitmap_clear(i);
         }
-        
-        used_pages = start_page;
+
+        /* Reserve page 0 (null / real-mode IVT+BDA) and the kernel image so
+         * the allocator never returns memory the running kernel occupies. */
+        reserve_range(0, PMM_PAGE_SIZE);
+        reserve_range((uint64_t)(uintptr_t)kernel_start,
+                      (uint64_t)(uintptr_t)kernel_end);
+
+        /* Recount used pages after reservations. */
+        used_pages = 0;
+        for (uint32_t i = 0; i < total_pages; i++) {
+            if (bitmap_test(i)) {
+                used_pages++;
+            }
+        }
         return;
     }
     
@@ -114,7 +153,19 @@ void pmm_init(struct multiboot_info *mboot) {
         }
         mmap = (struct multiboot_mmap_entry *)((uint32_t)mmap + mmap->size + sizeof(mmap->size));
     }
-    
+
+    /*
+     * Reserve regions the allocator must never hand out, even if the memory
+     * map reported them as available:
+     *   - page 0: null pointer guard / real-mode IVT + BIOS data area
+     *   - the kernel image itself: [kernel_start, kernel_end)
+     * Without the kernel reservation, the very first allocation returns the
+     * kernel's own load address (0x100000) and corrupts the running kernel.
+     */
+    reserve_range(0, PMM_PAGE_SIZE);
+    reserve_range((uint64_t)(uintptr_t)kernel_start,
+                  (uint64_t)(uintptr_t)kernel_end);
+
     /* Count used pages */
     used_pages = 0;
     for (uint32_t i = 0; i < total_pages; i++) {
