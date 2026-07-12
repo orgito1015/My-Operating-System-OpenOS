@@ -60,9 +60,14 @@ static struct page_table *get_page_table(struct page_directory *dir, void *virt,
         /* Store page table pointer */
         dir->tables[pd_index] = pt;
         
-        /* Set page directory entry */
+        /* Set page directory entry.
+         *
+         * PTE_USER is set at the directory level so that individual
+         * page-table entries decide user accessibility; without it the
+         * supervisor bit in the PDE would override user PTEs and ring 3
+         * could never execute (Phase 1 user-mode support). */
         dir->entries[pd_index] = ((uint32_t)phys & 0xFFFFF000) | 
-                                  PTE_PRESENT | PTE_WRITABLE;
+                                  PTE_PRESENT | PTE_WRITABLE | PTE_USER;
         
         return pt;
     }
@@ -146,8 +151,17 @@ void vmm_init(void) {
     if (ram_end > 0x4000000) {
         ram_end = 0x4000000;         /* cap: 64 MiB   */
     }
+    /*
+     * Phase 1 note: the identity map is marked PTE_USER so ring 3
+     * processes (whose code and stacks currently live inside the
+     * kernel's flat address space) can execute. This means there is NO
+     * kernel/user memory protection yet — user code is only prevented
+     * from executing privileged instructions and from bypassing
+     * syscalls by convention. Per-process page directories with proper
+     * supervisor-only kernel mappings are Phase 2 work.
+     */
     vmm_identity_map_region(kernel_directory, 0, ram_end,
-                           PTE_PRESENT | PTE_WRITABLE);
+                           PTE_PRESENT | PTE_WRITABLE | PTE_USER);
     
     /* Set as current directory */
     current_directory = kernel_directory;

@@ -85,6 +85,16 @@ void commands_register_all(void) {
     shell_register_command("test_gui", "Test GUI/windowing system", cmd_test_gui);
     shell_register_command("test_net", "Test networking stack", cmd_test_net);
     shell_register_command("test_script", "Test shell scripting", cmd_test_script);
+
+    /* Phase 1: process management */
+    shell_register_command("ps", "List processes", cmd_ps);
+    shell_register_command("kill", "Terminate a process [kill <pid>]", cmd_kill);
+    shell_register_command("spawn", "Spawn demo kernel threads [spawn <n>]", cmd_spawn);
+    shell_register_command("forktest", "Run ring 3 fork()/wait() demo", cmd_forktest);
+    shell_register_command("user", "Run ring 3 hello program (syscalls)", cmd_user);
+    shell_register_command("counters", "Run N ring 3 counters [counters <n>]", cmd_counters);
+    shell_register_command("psleep", "Sleep the shell [psleep <ms>]", cmd_psleep);
+    shell_register_command("sched", "Show scheduler statistics", cmd_sched);
 }
 
 /*

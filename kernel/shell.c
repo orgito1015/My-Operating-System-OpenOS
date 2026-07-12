@@ -8,7 +8,7 @@
 #include "../drivers/console.h"
 
 /* Maximum number of registered commands */
-#define MAX_COMMANDS 32
+#define MAX_COMMANDS 48
 
 /* Command registry */
 static shell_command_t command_table[MAX_COMMANDS];

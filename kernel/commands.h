@@ -35,4 +35,14 @@ void cmd_test_gui(int argc, char** argv);
 void cmd_test_net(int argc, char** argv);
 void cmd_test_script(int argc, char** argv);
 
+/* Process management commands (Phase 1, kernel/proc_commands.c) */
+void cmd_ps(int argc, char** argv);
+void cmd_kill(int argc, char** argv);
+void cmd_spawn(int argc, char** argv);
+void cmd_forktest(int argc, char** argv);
+void cmd_user(int argc, char** argv);
+void cmd_counters(int argc, char** argv);
+void cmd_psleep(int argc, char** argv);
+void cmd_sched(int argc, char** argv);
+
 #endif /* OPENOS_KERNEL_COMMANDS_H */

@@ -5,6 +5,7 @@
 #include "timer.h"
 #include "../arch/x86/pic.h"
 #include "../arch/x86/ports.h"
+#include "../process/scheduler.h"
 
 /* System tick counter */
 static volatile uint64_t system_ticks = 0;
@@ -41,12 +42,20 @@ void timer_init(uint32_t frequency) {
 /*
  * Timer interrupt handler
  * Called from IRQ0 assembly stub
+ *
+ * The EOI is sent BEFORE invoking the scheduler: scheduler_tick() may
+ * context-switch away and not return to this frame for a while, and
+ * the PIC must be able to deliver further timer interrupts to the
+ * process we switch to.
  */
 void timer_handler(void) {
     system_ticks++;
     
     /* Send EOI to PIC */
     pic_send_eoi(0);
+
+    /* Drive preemptive scheduling (no-op until scheduler_start()). */
+    scheduler_tick();
 }
 
 /*

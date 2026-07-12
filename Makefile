@@ -22,6 +22,7 @@ CFLAGS += -Wall -Wextra      # Enable all warnings
 CFLAGS += -m32               # 32-bit x86 target
 CFLAGS += -fno-pic           # No position-independent code
 CFLAGS += -fno-stack-protector  # No stack canaries (not available in kernel)
+CFLAGS += -fno-omit-frame-pointer  # Keep EBP chains (needed by fork() stack relocation)
 CFLAGS += -nostdlib          # Don't link standard library
 CFLAGS += -nostartfiles      # Don't use standard startup files
 CFLAGS += -nodefaultlibs     # Don't use default libraries
@@ -80,14 +81,20 @@ endif
 
 # Architecture-specific object files
 ARCH_OBJS = $(ARCH_DIR)/boot.o \
+            $(ARCH_DIR)/gdt.o \
             $(ARCH_DIR)/idt.o \
             $(ARCH_DIR)/isr.o \
             $(ARCH_DIR)/pic.o \
+            $(ARCH_DIR)/context.o \
+            $(ARCH_DIR)/syscall_stub.o \
             $(ARCH_DIR)/exceptions_asm.o \
             $(ARCH_DIR)/exceptions.o
 
 # Kernel object files
 KERNEL_OBJS = $(KERNEL_DIR)/kernel.o \
+              $(KERNEL_DIR)/syscall.o \
+              $(KERNEL_DIR)/user_programs.o \
+              $(KERNEL_DIR)/proc_commands.o \
               $(KERNEL_DIR)/panic.o \
               $(KERNEL_DIR)/string.o \
               $(KERNEL_DIR)/shell.o \
@@ -121,7 +128,8 @@ DRIVERS_OBJS = $(DRIVERS_DIR)/console.o \
 FS_OBJS = $(FS_DIR)/vfs.o
 
 # Process management object files
-PROCESS_OBJS = $(PROCESS_DIR)/process.o
+PROCESS_OBJS = $(PROCESS_DIR)/process.o \
+               $(PROCESS_DIR)/scheduler.o
 
 # All object files
 OBJS = $(ARCH_OBJS) $(KERNEL_OBJS) $(CPU_OBJS) $(MEMORY_OBJS) $(DRIVERS_OBJS) $(FS_OBJS) $(PROCESS_OBJS)
@@ -143,6 +151,15 @@ $(ARCH_DIR)/idt.o: $(ARCH_DIR)/idt.c $(ARCH_DIR)/idt.h
 $(ARCH_DIR)/isr.o: $(ARCH_DIR)/isr.S
 	$(CC) $(ASFLAGS) -c $< -o $@
 
+$(ARCH_DIR)/gdt.o: $(ARCH_DIR)/gdt.c $(ARCH_DIR)/gdt.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(ARCH_DIR)/context.o: $(ARCH_DIR)/context.S
+	$(CC) $(ASFLAGS) -c $< -o $@
+
+$(ARCH_DIR)/syscall_stub.o: $(ARCH_DIR)/syscall.S
+	$(CC) $(ASFLAGS) -c $< -o $@
+
 $(ARCH_DIR)/pic.o: $(ARCH_DIR)/pic.c $(ARCH_DIR)/pic.h $(ARCH_DIR)/ports.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -157,6 +174,15 @@ $(KERNEL_DIR)/kernel.o: $(KERNEL_DIR)/kernel.c $(KERNEL_DIR)/kernel.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(KERNEL_DIR)/panic.o: $(KERNEL_DIR)/panic.c $(KERNEL_DIR)/panic.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/syscall.o: $(KERNEL_DIR)/syscall.c $(KERNEL_DIR)/syscall.h $(PROCESS_DIR)/process.h $(PROCESS_DIR)/scheduler.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/user_programs.o: $(KERNEL_DIR)/user_programs.c $(KERNEL_DIR)/user_programs.h include/usyscall.h $(KERNEL_DIR)/syscall.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(KERNEL_DIR)/proc_commands.o: $(KERNEL_DIR)/proc_commands.c $(KERNEL_DIR)/commands.h $(KERNEL_DIR)/user_programs.h $(PROCESS_DIR)/process.h $(PROCESS_DIR)/scheduler.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(KERNEL_DIR)/string.o: $(KERNEL_DIR)/string.c $(KERNEL_DIR)/string.h
@@ -227,7 +253,10 @@ $(FS_DIR)/vfs.o: $(FS_DIR)/vfs.c $(FS_DIR)/vfs.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Process management files
-$(PROCESS_DIR)/process.o: $(PROCESS_DIR)/process.c $(PROCESS_DIR)/process.h
+$(PROCESS_DIR)/process.o: $(PROCESS_DIR)/process.c $(PROCESS_DIR)/process.h $(PROCESS_DIR)/scheduler.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(PROCESS_DIR)/scheduler.o: $(PROCESS_DIR)/scheduler.c $(PROCESS_DIR)/scheduler.h $(PROCESS_DIR)/process.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Rust driver configuration library (always call cargo; it handles incremental builds)

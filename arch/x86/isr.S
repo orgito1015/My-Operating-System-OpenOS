@@ -3,7 +3,7 @@
  */
 
 /* Kernel segment selectors (from GRUB's GDT) */
-.set KERNEL_DATA_SEGMENT, 0x18
+.set KERNEL_DATA_SEGMENT, 0x10
 
 .section .text
 
